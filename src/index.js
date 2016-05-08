@@ -64,6 +64,14 @@ surplus = {}) {
     }
   }
 
+  if (hopefuls.length <= seats - elected.length) {
+    elected = [...elected, ...hopefuls];
+    return {
+      elected,
+      counts,
+    }
+  }
+
   if (quota === -1) {
     quota = Math.floor(votes.length / (seats + 1) + 1);
   }
@@ -218,30 +226,18 @@ function breakTie(potentials, counts) {
   }
 }
 
-function test() {
-  let votes_ = [];
-  let candidates_ = ['a', 'b', 'c', 'd'];
-  let seats_ = 3;
-  const [a, b, c, d] = candidates_;
+function count({votes, candidates, seats, quota}) {
+  if (quota < 0) quota = Math.floor(votes.length / (seats + 1) + 1);
+  let result = round(votes, seats, quota, candidates, [], [], []);
 
-  votes_ = populate([
-    [4, [a,b,c,d]],
-    [1, [a,c,d,b]],
-    [2, [b,a,d,c]],
-    [3, [b,a,c,d]],
-    [5, [a,d,b,c]],
-    [4, [c,b,d,a]],
-    [5, [d,c,b,a]],
-  ]);
-
-  let quota_ = Math.floor(votes_.length / (seats_ + 1) + 1); // Droop
-  const PRECISION = 6;
-  let result = round(votes_, seats_, quota_, candidates_, [], [], []);
-
-  console.log('votes #', votes_.length);
-  console.log('quota', quota_);
-  console.log('counts', result.counts);
-  console.log('elected', result.elected);
+  console.log('votes #:', votes.length);
+  console.log('quota:', quota);
+  console.log('counts:', result.counts);
+  console.log('elected:', result.elected);
+  return result;
 }
 
-test();
+let options = require('../options.json');
+const PRECISION = options.precision || 6;
+
+count(options);

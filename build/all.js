@@ -105,6 +105,14 @@ function round(votes, seats) {
     };
   }
 
+  if (hopefuls.length <= seats - elected.length) {
+    elected = [].concat(_toConsumableArray(elected), _toConsumableArray(hopefuls));
+    return {
+      elected: elected,
+      counts: counts
+    };
+  }
+
   if (quota === -1) {
     quota = Math.floor(votes.length / (seats + 1) + 1);
   }
@@ -346,25 +354,24 @@ function breakTie(potentials, counts) {
   }
 }
 
-function test() {
-  var votes_ = [];
-  var candidates_ = ['a', 'b', 'c', 'd'];
-  var seats_ = 3;
-  var a = candidates_[0];
-  var b = candidates_[1];
-  var c = candidates_[2];
-  var d = candidates_[3];
+function count(_ref) {
+  var votes = _ref.votes;
+  var candidates = _ref.candidates;
+  var seats = _ref.seats;
+  var quota = _ref.quota;
 
+  if (quota < 0) quota = Math.floor(votes.length / (seats + 1) + 1);
+  var result = round(votes, seats, quota, candidates, [], [], []);
 
-  votes_ = populate([[4, [a, b, c, d]], [1, [a, c, d, b]], [2, [b, a, d, c]], [3, [b, a, c, d]], [5, [a, d, b, c]], [4, [c, b, d, a]], [5, [d, c, b, a]]]);
-
-  var quota_ = Math.floor(votes_.length / (seats_ + 1) + 1); // Droop
-  var PRECISION = 6;
-  var result = round(votes_, seats_, quota_, candidates_, [], [], []);
-
-  console.log('votes #', votes_.length);
-  console.log('quota', quota_);
-  console.log('counts', result.counts);
-  console.log('elected', result.elected);
+  console.log('votes #:', votes.length);
+  console.log('quota:', quota);
+  console.log('counts:', result.counts);
+  console.log('elected:', result.elected);
+  return result;
 }
+
+var options = require('../options.json');
+var PRECISION = options.precision || 6;
+
+count(options);
 //# sourceMappingURL=all.js.map
