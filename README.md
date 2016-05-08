@@ -48,7 +48,7 @@ quota is used; otherwise the quota is fixed at the given non-negative value
 - **precision**: the precision for fractional vote transfer. default is 6, i.e.
 the votes are transferred at its value rounded to six decimal places.
 
-### 'votes.csv'
+### `votes.csv`
 This `.csv` file is used to import votes collected through table-format ranking,
 e.g. Google Forms.
 
@@ -64,7 +64,7 @@ candidate1, candidate2, candidate3
 1,2,3
 ```
 
-Three voters (1st, 3rd and 4th ballot) ranked `candidate1` as their first
+Here, three voters (1st, 3rd and 4th ballot) ranked `candidate1` as their first
 preference. `candidate2` is ranked the first on the second ballot.
 
 
