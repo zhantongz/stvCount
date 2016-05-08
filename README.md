@@ -1,12 +1,14 @@
 stvCount
 ========
-This an counter for single transferable vote (STV) electoral system.
+This is an counter for single transferable vote (STV) electoral system, written
+in Javascript.
 
 It is designed for the use of Reddit Model World
 ([/r/cmhoc](https://reddit.com/r/cmhoc) and
 [/r/MHoC](https://reddit.com/r/mhoc)).
 
 It roughly follows the Wright system whereas:
+
 1. Droop quota is used; every candidate who reaches the quota is elected.
 2. The surplus vote is not transferred to elected candidates but rather to the
 next preferred candidate on the ballot (who is neither elected nor eliminated).
