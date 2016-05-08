@@ -12,8 +12,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
-var num = 0;
-
 function populate(votes) {
   var populated = [];
   var _iteratorNormalCompletion = true;
@@ -171,8 +169,14 @@ function round(votes, seats) {
 
   var excluded = [].concat(_toConsumableArray(elected), _toConsumableArray(eliminated));
   if (roundElected.length === 0) {
-    var elimCand = eliminate(votes, '', roundCounts, hopefuls, excluded, surplus, counts);
-    eliminated.push(elimCand);
+    (function () {
+      var elimCand = eliminate(votes, '', roundCounts, hopefuls, excluded, surplus, counts);
+      eliminated.push(elimCand);
+      hopefuls = hopefuls.filter(function (e) {
+        return e !== elimCand;
+      });
+      console.log('eliminated', eliminated);
+    })();
   } else {
     roundElected.forEach(function (v) {
       console.log('elected', v);
@@ -182,7 +186,10 @@ function round(votes, seats) {
 
   counts.push(roundCounts);
   console.log('round count', roundCounts);
-  console.log('round', ++num);
+  console.log('round', counts.length);
+  if (counts.length < 20) {} else {
+    return;
+  }
   return round(votes, seats, quota, hopefuls, eliminated, elected, counts, surplus);
 }
 
@@ -262,11 +269,15 @@ function distributeSurplus(votes, lastCounts, surplus) {
   for (var candidate in surplus) {
     if (surplus.hasOwnProperty(candidate)) {
       var dist = surplus[candidate].dist;
-      var value = surplus[candidate].surplus / surplus[candidate].total;
+      var value = 0;
+      if (surplus[candidate].total !== 0) {
+        value = surplus[candidate].surplus / surplus[candidate].total;
+      }
 
       for (var transfer in dist) {
         if (dist.hasOwnProperty(transfer)) {
-          count[transfer] += (dist[transfer] * value).round(PRECISION);
+          count[transfer] += dist[transfer] * value;
+          count[transfer] = count[transfer].round(PRECISION);
         }
       }
     }
@@ -291,7 +302,33 @@ function eliminate(votes, candidate, roundCounts, hopefuls, excluded, surplus, c
       if (potentials.length === 1) {
         candidate = candidate[potentials[0]];
       } else {
-        candidate = breakTie(potentials, counts);
+        var potentialCands = [];
+        var _iteratorNormalCompletion5 = true;
+        var _didIteratorError5 = false;
+        var _iteratorError5 = undefined;
+
+        try {
+          for (var _iterator5 = potentials[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+            var ind = _step5.value;
+
+            potentialCands.push(candidate[ind]);
+          }
+        } catch (err) {
+          _didIteratorError5 = true;
+          _iteratorError5 = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion5 && _iterator5.return) {
+              _iterator5.return();
+            }
+          } finally {
+            if (_didIteratorError5) {
+              throw _iteratorError5;
+            }
+          }
+        }
+
+        candidate = breakTie(potentialCands, counts);
       }
       excluded.push(candidate);
       hopefuls = hopefuls.filter(function (e) {
@@ -324,16 +361,16 @@ function eliminate(votes, candidate, roundCounts, hopefuls, excluded, surplus, c
 function breakTie(potentials, counts) {
   console.error('a tie!');
   if (counts.length > 0) {
-    var _ret4 = function () {
+    var _ret5 = function () {
       var lastCount = counts[counts.length - 1];
       var lastCounts = _lodash2.default.pick(lastCount, potentials);
       var minVotes = _lodash2.default.min(_lodash2.default.values(lastCounts));
-      var potentialsTie = potentials.reduce(function (prev, curr, ind, arr) {
-        if (curr === minVotes) {
-          prev.push(ind);
+      var potentialsTie = [];
+      potentials.forEach(function (val, ind) {
+        if (lastCounts[val] === minVotes) {
+          potentialsTie.push(ind);
         }
-        return prev;
-      }, []);
+      });
       if (potentialsTie.length <= 0) console.error('unable to continue elimination');
       if (potentialsTie.length === potentials.length) {
         return {
@@ -345,12 +382,16 @@ function breakTie(potentials, counts) {
           v: potentials[potentialsTie[0]]
         };
       }
+      var potentialCands = [];
+      for (var ind in potentialsTie) {
+        potentialCands.push(potentials[ind]);
+      }
       return {
-        v: breakTie(potentialsTie, counts.slice(0, -1))
+        v: breakTie(potentialCands, counts.slice(0, -1))
       };
     }();
 
-    if ((typeof _ret4 === 'undefined' ? 'undefined' : _typeof(_ret4)) === "object") return _ret4.v;
+    if ((typeof _ret5 === 'undefined' ? 'undefined' : _typeof(_ret5)) === "object") return _ret5.v;
   }
 }
 
@@ -372,6 +413,75 @@ function count(_ref) {
 
 var options = require('../options.json');
 var PRECISION = options.precision || 6;
+var Converter = require('csvtojson').Converter;
+var converter = new Converter({});
 
-count(options);
+converter.on('end_parsed', function (jsonArray) {
+  var votes = [];
+  var ind = 0;
+  var _iteratorNormalCompletion6 = true;
+  var _didIteratorError6 = false;
+  var _iteratorError6 = undefined;
+
+  try {
+    var _loop3 = function _loop3() {
+      var vote = _step6.value;
+
+      vote = _lodash2.default.pickBy(vote, _lodash2.default.identity);
+      var voteArray = Object.keys(vote).sort(function (a, b) {
+        return vote[a] - vote[b];
+      });
+      var temp = [];
+      var _iteratorNormalCompletion7 = true;
+      var _didIteratorError7 = false;
+      var _iteratorError7 = undefined;
+
+      try {
+        for (var _iterator7 = voteArray[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
+          var i = _step7.value;
+
+          i && temp.push(i);
+        }
+      } catch (err) {
+        _didIteratorError7 = true;
+        _iteratorError7 = err;
+      } finally {
+        try {
+          if (!_iteratorNormalCompletion7 && _iterator7.return) {
+            _iterator7.return();
+          }
+        } finally {
+          if (_didIteratorError7) {
+            throw _iteratorError7;
+          }
+        }
+      }
+
+      voteArray = temp;
+      votes[ind++] = voteArray;
+    };
+
+    for (var _iterator6 = jsonArray[Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+      _loop3();
+    }
+  } catch (err) {
+    _didIteratorError6 = true;
+    _iteratorError6 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion6 && _iterator6.return) {
+        _iterator6.return();
+      }
+    } finally {
+      if (_didIteratorError6) {
+        throw _iteratorError6;
+      }
+    }
+  }
+
+  options.votes = votes;
+  count(options);
+});
+
+require('fs').createReadStream('./votes.csv').pipe(converter);
 //# sourceMappingURL=all.js.map

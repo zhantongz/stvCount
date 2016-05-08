@@ -1,8 +1,6 @@
 import 'babel-polyfill';
 import _ from 'lodash'
 
-let num = 0;
-
 function populate(votes) {
   let populated = [];
   for (let vote of votes) {
@@ -106,6 +104,8 @@ surplus = {}) {
     let elimCand = eliminate(votes, '', roundCounts, hopefuls, excluded,
     surplus, counts);
     eliminated.push(elimCand);
+    hopefuls = hopefuls.filter(e => e !== elimCand);
+    console.log('eliminated', eliminated);
   } else {
     roundElected.forEach(v => {
       console.log('elected', v)
@@ -116,7 +116,8 @@ surplus = {}) {
 
   counts.push(roundCounts);
   console.log('round count', roundCounts);
-  console.log('round', ++num);
+  console.log('round', counts.length);
+  if (counts.length < 20) {} else {return;}
   return round(votes, seats, quota, hopefuls, eliminated, elected, counts,
     surplus);
 }
@@ -149,11 +150,15 @@ function distributeSurplus(votes, lastCounts, surplus) {
   for (let candidate in surplus) {
     if (surplus.hasOwnProperty(candidate)) {
       let dist = surplus[candidate].dist;
-      let value = surplus[candidate].surplus / surplus[candidate].total;
+      let value = 0;
+      if (surplus[candidate].total !== 0) {
+        value = surplus[candidate].surplus / surplus[candidate].total;
+      }
 
       for (let transfer in dist) {
         if (dist.hasOwnProperty(transfer)) {
-          count[transfer] += (dist[transfer] * value).round(PRECISION);
+          count[transfer] += dist[transfer] * value;
+          count[transfer] = count[transfer].round(PRECISION);
         }
       }
     }
@@ -177,7 +182,11 @@ surplus, counts, surplusVotes = 0) {
     if (potentials.length === 1) {
       candidate = candidate[potentials[0]];
     } else {
-      candidate = breakTie(potentials, counts);
+      let potentialCands = [];
+      for (let ind of potentials) {
+        potentialCands.push(candidate[ind])
+      }
+      candidate = breakTie(potentialCands, counts);
     }
     excluded.push(candidate);
     hopefuls = hopefuls.filter(e => e !== candidate);
@@ -208,12 +217,12 @@ function breakTie(potentials, counts) {
     let lastCount = counts[counts.length - 1];
     let lastCounts = _.pick(lastCount, potentials);
     let minVotes = _.min(_.values(lastCounts));
-    let potentialsTie = potentials.reduce(function(prev, curr, ind, arr) {
-      if (curr === minVotes) {
-        prev.push(ind);
+    let potentialsTie = [];
+    potentials.forEach(function(val, ind) {
+      if (lastCounts[val] === minVotes) {
+        potentialsTie.push(ind);
       }
-      return prev;
-    }, []);
+    });
     if (potentialsTie.length <= 0)
       console.error('unable to continue elimination');
     if (potentialsTie.length === potentials.length) {
@@ -222,7 +231,11 @@ function breakTie(potentials, counts) {
     if (potentialsTie.length === 1) {
       return potentials[potentialsTie[0]];
     }
-    return breakTie(potentialsTie, counts.slice(0, -1));
+    let potentialCands = [];
+    for (let ind in potentialsTie) {
+      potentialCands.push(potentials[ind])
+    }
+    return breakTie(potentialCands, counts.slice(0, -1));
   }
 }
 
@@ -239,5 +252,24 @@ function count({votes, candidates, seats, quota}) {
 
 let options = require('../options.json');
 const PRECISION = options.precision || 6;
+const Converter = require('csvtojson').Converter;
+const converter = new Converter({});
 
-count(options);
+converter.on('end_parsed', jsonArray => {
+  let votes = [];
+  let ind = 0;
+  for (let vote of jsonArray) {
+    vote = _.pickBy(vote, _.identity);
+    let voteArray = Object.keys(vote).sort((a, b) => vote[a] - vote[b]);
+    let temp = [];
+    for (let i of voteArray)
+      i && temp.push(i);
+
+    voteArray = temp;
+    votes[ind++] = voteArray;
+  }
+  options.votes = votes;
+  count(options);
+});
+
+require('fs').createReadStream('./votes.csv').pipe(converter);
