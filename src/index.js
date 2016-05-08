@@ -1,4 +1,7 @@
+import 'babel-polyfill';
 import _ from 'lodash'
+
+let num = 0;
 
 function populate(votes) {
   let populated = [];
@@ -6,6 +9,10 @@ function populate(votes) {
     Array(vote[0]).fill(vote[1]).forEach(v => populated.push(v));
   }
   return populated;
+}
+
+Number.prototype.round = function(places) {
+  return +(Math.round(this + 'e+' + places)  + 'e-' + places);
 }
 
 /**
@@ -51,7 +58,10 @@ function countPref(pref, cand, votes) {
 function round(votes, seats, quota = -1, hopefuls, eliminated, elected, counts,
 surplus = {}) {
   if (elected.length === seats) {
-    return elected;
+    return {
+      elected,
+      counts,
+    }
   }
 
   if (quota === -1) {
@@ -59,16 +69,18 @@ surplus = {}) {
   }
   let distributed = {};
   if (Object.keys(surplus).length > 0) {
-    distributed = distributeSurplus(votes, counts, surplus);
+    console.log('surplus', surplus)
+    distributed = distributeSurplus(votes, counts[counts.length - 1], surplus);
+    surplus = {};
   }
 
   let roundCounts = {};
   let roundElected = [];
   let hasElected = false;
 
-  for (let v of candidates) {
+  for (let v of hopefuls) {
     let count = 0;
-    if (counts.length = 0) {
+    if (counts.length === 0) {
       count = countPref(1, v, votes);
     } else {
       count = distributed[v];
@@ -77,47 +89,100 @@ surplus = {}) {
     if (count >= quota) {
       roundElected.push(v);
       elected.push(v);
+      hopefuls = hopefuls.filter(e => e !== v);
     }
   }
 
+  let excluded = [...elected, ...eliminated];
   if (roundElected.length === 0) {
-    eliminate(votes, roundCounts, surplus, counts);
+    let elimCand = eliminate(votes, '', roundCounts, hopefuls, excluded,
+    surplus, counts);
+    eliminated.push(elimCand);
   } else {
     roundElected.forEach(v => {
-
+      console.log('elected', v)
+      eliminate(votes, v, roundCounts, hopefuls, excluded,
+        surplus, counts, roundCounts[v] - quota);
     });
   }
 
   counts.push(roundCounts);
-  return round(votes, seats, quota, hopefuls, excluded, elected, counts,
+  console.log('round count', roundCounts);
+  console.log('round', ++num);
+  return round(votes, seats, quota, hopefuls, eliminated, elected, counts,
     surplus);
 }
 
-function countSurplus(votes, candidate, excluded) {}
-function distributeSurplus(votes, counts, surplus) {}
-function eliminate(votes, candidate = '', roundCounts, surplus, counts,
-surplusVotes = 0) {
-  if (candidate === '') {
-    candidates = Object.keys(roundCounts);
-    minVotes = _.min(_.values(roundCounts));
-    potentials = candidates.reduce(function(prev, curr, ind, arr) {
-      if (curr === minVotes) {
-        prev.push(ind);
+function countSurplus(votes, candidate, hopefuls, excluded) {
+  let surplus = {};
+  let transferred = _.cloneDeep(votes).filter((val, ind, arr) => {
+    if (val[0] === candidate) return true;
+    return false;
+  });
+  let total = transferred.length;
+
+  for (let exclude of excluded) {
+    transferred.forEach((val, ind, arr) => {
+      transferred[ind] = val.filter(e => e !== exclude);
+    });
+  }
+
+  for (let hopeful of hopefuls) {
+    surplus[hopeful] = countPref(1, hopeful, transferred);
+  }
+
+  return {
+    dist: surplus,
+    total,
+  };
+}
+function distributeSurplus(votes, lastCounts, surplus) {
+  let count = Object.assign({}, lastCounts);
+  for (let candidate in surplus) {
+    if (surplus.hasOwnProperty(candidate)) {
+      let dist = surplus[candidate].dist;
+      let value = surplus[candidate].surplus / surplus[candidate].total;
+
+      for (let transfer in dist) {
+        if (dist.hasOwnProperty(transfer)) {
+          count[transfer] += (dist[transfer] * value).round(PRECISION);
+        }
       }
-      return prev;
-    }, []);
-    if (potentials <= 0) console.error('unable to continue elimination');
+    }
+  }
+  return count;
+}
+
+function eliminate(votes, candidate, roundCounts, hopefuls, excluded,
+surplus, counts, surplusVotes = 0) {
+  if (candidate === '') {
+    candidate = Object.keys(roundCounts);
+    let minVotes = _.min(_.values(roundCounts));
+    let potentials = [];
+    candidate.forEach(function(val, ind) {
+      if (roundCounts[val] === minVotes) {
+        potentials.push(ind);
+      }
+    });
+    if (potentials.length <= 0)
+      console.error('case 1. unable to continue elimination');
     if (potentials.length === 1) {
-      candidate = candidates[potentials[0]];
+      candidate = candidate[potentials[0]];
     } else {
       candidate = breakTie(potentials, counts);
     }
+    excluded.push(candidate);
+    hopefuls = hopefuls.filter(e => e !== candidate);
   }
-  for (let vote of votes) {
-    vote.filter(e => e !== candidate);
-  }
+
+  surplus[candidate] = countSurplus(votes, candidate, hopefuls, excluded);
   surplus[candidate].surplus = surplusVotes || roundCounts[candidate];
-  surplus[candidate].dist = countSurplus(votes, candidate)
+
+  votes.forEach((val, ind, arr) => {
+    votes[ind] = val.filter(e => e !== candidate);
+  });
+
+  return candidate;
 }
 
 /**
@@ -134,15 +199,16 @@ function breakTie(potentials, counts) {
   if (counts.length > 0) {
     let lastCount = counts[counts.length - 1];
     let lastCounts = _.pick(lastCount, potentials);
-    minVotes = _.min(_.values(lastCounts));
-    potentialsTie = potentials.reduce(function(prev, curr, ind, arr) {
+    let minVotes = _.min(_.values(lastCounts));
+    let potentialsTie = potentials.reduce(function(prev, curr, ind, arr) {
       if (curr === minVotes) {
         prev.push(ind);
       }
       return prev;
     }, []);
-    if (potentialsTie <= 0) console.error('unable to continue elimination');
-    if (potentialTie.length === potentials.length) {
+    if (potentialsTie.length <= 0)
+      console.error('unable to continue elimination');
+    if (potentialsTie.length === potentials.length) {
       return potentials[Math.floor(Math.random() * potentials.length)];
     }
     if (potentialsTie.length === 1) {
@@ -152,28 +218,30 @@ function breakTie(potentials, counts) {
   }
 }
 
-let votes = [];
-let candidates = ['a', 'b', 'c', 'd'];
-let seats = 3;
-const [a, b, c, d] = candidates;
+function test() {
+  let votes_ = [];
+  let candidates_ = ['a', 'b', 'c', 'd'];
+  let seats_ = 3;
+  const [a, b, c, d] = candidates_;
 
-votes = populate([
-  [4, [a,b,c,d]],
-  [1, [a,c,d,b]],
-  [2, [b,a,d,c]],
-  [3, [b,a,c,d]],
-  [5, [a,d,b,c]],
-  [4, [c,b,d,a]],
-  [5, [d,c,b,a]],
-]);
+  votes_ = populate([
+    [4, [a,b,c,d]],
+    [1, [a,c,d,b]],
+    [2, [b,a,d,c]],
+    [3, [b,a,c,d]],
+    [5, [a,d,b,c]],
+    [4, [c,b,d,a]],
+    [5, [d,c,b,a]],
+  ]);
 
-var quota = Math.floor(votes.length / (seats + 1) + 1); // Droop
-var hopefuls = candidates;
-var excluded = [];
-var elected = [];
-var counts = [];
+  let quota_ = Math.floor(votes_.length / (seats_ + 1) + 1); // Droop
+  const PRECISION = 6;
+  let result = round(votes_, seats_, quota_, candidates_, [], [], []);
 
-console.log('votes #', votes.length);
-console.log('quota', quota);
-console.log('counts', counts);
-console.log('elected', elected);
+  console.log('votes #', votes_.length);
+  console.log('quota', quota_);
+  console.log('counts', result.counts);
+  console.log('elected', result.elected);
+}
+
+test();

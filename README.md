@@ -9,7 +9,8 @@ It is designed for the use of Reddit Model World
 
 It roughly follows the Wright system whereas:
 
-1. Droop quota is used; every candidate who reaches the quota is elected.
+1. Droop quota is used; every candidate who reaches the quota is elected. Other
+quota may be configured.
 2. The surplus vote is not transferred to elected candidates but rather to the
 next preferred candidate on the ballot (who is neither elected nor eliminated).
 3. For each elected candidate that exceeds the quota, every vote for that
