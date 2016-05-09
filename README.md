@@ -21,6 +21,9 @@ equal to the ratio of the surplus votes to the total number of votes.
 in the last earlier round without tie. If the tie cannot be broken because all
 preceding rounds are tied, the tie is broken randomly.
 
+The default setting is the Model Canadian system and is verified against past
+election results in Model Canada (/r/cmhoc).
+
 Usage
 -------
 [Node.js](https://nodejs.org/) and [npm](https://www.npmjs.com/) are required.
