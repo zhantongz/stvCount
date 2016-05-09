@@ -7,7 +7,7 @@ It is designed for the use of Reddit Model World
 ([/r/cmhoc](https://reddit.com/r/cmhoc) and
 [/r/MHoC](https://reddit.com/r/mhoc)).
 
-It roughly follows the Wright system whereas:
+It roughly follows the Scottish system whereas:
 
 1. Droop quota is used; every candidate who reaches the quota is elected. Other
 quota may be configured.
