@@ -1,8 +1,7 @@
 {
-  "seats": 4,
-  "candidates": ["Piggbam","go_west","Imperial_","thedesertfox929","mcr3527",
-    "irelandball","RomanCatholic","alexwagbo","ThatThingInTheCorner","Didicet",
-    "MrRichyy","iron_star","ContrabannedTheMC","RossVDebs","whaleshipessex"],
+  "seats": 1,
+  "candidates": ["Karomne Liberal / Libéral","Brotester Green / Vert","brendand19 NDP / NPD","Unionist Bloc Québécois","madrockets Independent / Indépendant","Spindleton Independent / Indépendant"
+],
   "quota": -1,
   "precision": 6
 }
