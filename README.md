@@ -22,7 +22,12 @@ in the last earlier round without tie. If the tie cannot be broken because all
 preceding rounds are tied, the tie is broken randomly.
 
 The default setting is the Model Canadian system and is verified against past
-election results in Model Canada (/r/cmhoc).
+IRV election results in Model Canada (/r/cmhoc).
+
+STV counting is verified against openSTV 1.7. Past Model Canadian elections were
+not conducted exactly following the system.
+
+Sample result (IRV): http://pastebin.com/rWbB7er1
 
 Usage
 -------

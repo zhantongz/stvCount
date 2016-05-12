@@ -136,7 +136,7 @@ function round(votes, values, seats) {
     };
   }
 
-  console.log('---------- ROUND', counts.length + 1, '----------');
+  console.log('########## ROUND', counts.length + 1, '##########');
 
   if (quota === -1) {
     quota = Math.floor(votes.length / (seats + 1) + 1);
