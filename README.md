@@ -44,17 +44,24 @@ node build/all.js
   "seats": 2,
   "candidates": ["candidate1", "candidate2", "candidate3"],
   "quota": -1,
-  "precision": 6
+  "precision": 6,
+  "log": true,
+  "ron": ""
 }
 ```
 * **seats**: number of seats available. The counting ends when all seats are
 filled.
-- **candidates**: list of candidates. The names in the list must match the
+- **candidates**: list of candidates. The names in the list should match the
 headers in the `.csv` file.
 - **quota**: quota used to declare someone elected. When set below 0, the Droop
-quota is used; otherwise the quota is fixed at the given non-negative value
-- **precision**: the precision for fractional vote transfer. default is 6, i.e.
-the votes are transferred at its value rounded to six decimal places.
+quota is used; otherwise the quota is fixed at the given non-negative value.
+Default: `-1` (use Droop quota)
+- **precision**: the precision for fractional vote transfer. Default: `6`
+- **log**: only credit, counting start and counting end are logged if `false`.
+Default: `true`
+- **ron**: the name of the Re-open Nomination (RON) candidate. The RON candidate
+is never eliminated. If RON is not a supported option, it should be set to
+an empty string. Default: `''`
 
 ### `votes.csv`
 This `.csv` file is used to import votes collected through table-format ranking,

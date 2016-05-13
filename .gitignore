@@ -13,3 +13,4 @@ test*.js
 test*.json
 votes*.csv
 docs
+.\#**
