@@ -1,6 +1,12 @@
 'use strict';
 
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
+exports.count = count;
 
 require('babel-polyfill');
 
@@ -12,6 +18,10 @@ var _chalk = require('chalk');
 
 var _chalk2 = _interopRequireDefault(_chalk);
 
+var _cliTable = require('cli-table');
+
+var _cliTable2 = _interopRequireDefault(_cliTable);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
@@ -20,7 +30,13 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 
 var VERSION = 'v16.05.1';
 
-var Table = require('cli-table');
+var logging = true;
+var log_ = function log_(args) {
+  return logging ? console.log(args) : {};
+};
+var logTrue = function logTrue(args) {
+  return console.log(args);
+};
 
 function populate(votes) {
   var populated = [];
@@ -58,22 +74,6 @@ Number.prototype.round = function (places) {
   return +(Math.round(this + 'e+' + places) + 'e-' + places);
 };
 
-/**
- * A single transferrable vote, containing an array of names of candidates
- * (`string`s) in order of preference indicated, i.e. first-preference vote is
- * at index `0`.
- * @typedef {string[][]} vote
- */
-
-/**
- * Counts a candidate's votes in a position on ranked ballot
- * @param {number} pref The position of preference at which the votes for the
- * candidate is counted, e.g. `pref = 1` to count first-preference votes
- * @param {string} cand Name of the candidate
- * @param {vote[]} votes Votes to be counted
- * @returns {number} Number of votes the candidate receives at the specified
- * position on the ballot
- */
 function countPref(pref, cand, votes) {
   var count = 0;
   votes.forEach(function (v, i, arr) {
@@ -90,22 +90,6 @@ function getPref(pref, cand, votes) {
   return count;
 }
 
-/**
- * Does a round of counting for STV
- * @param  {vote[]} votes    Votes to be counted
- * @param  {number} seats    Number of seats available
- * @param  {number} [quota] Quota needed to declared a candidate elected;
- * defaults to Droop quota calculated from `votes.length` and `seats`
- * @param  {string[]} hopefuls List of candidates to be counted, i.e. neither
- * elected nor eliminated
- * @param  {string[]} eliminated List of candidates eliminated from counting
- * @param  {string[]} elected  List of already elected candidates
- * @param  {Object[]} counts   History of votes received by the candidates in
- * previous rounds
- * @param  {Object} [surplus = {}] Surplus votes to be redistributed from last
- * round; defaults to `{}`
- * @return {string[]}          List of all elected candidates after this round
- */
 function round(votes, values, seats) {
   var quota = arguments.length <= 3 || arguments[3] === undefined ? -1 : arguments[3];
   var hopefuls = arguments[4];
@@ -115,8 +99,8 @@ function round(votes, values, seats) {
   var surplus = arguments.length <= 8 || arguments[8] === undefined ? {} : arguments[8];
 
   if (elected.length === seats) {
-    console.log('<all vacancies filled>');
-    console.log('********** COUNTING ENDS **********');
+    log_('<all vacancies filled>');
+    logTrue('********** COUNTING ENDS **********');
     return {
       elected: elected,
       counts: counts
@@ -124,19 +108,19 @@ function round(votes, values, seats) {
   }
 
   if (hopefuls.length <= seats - elected.length) {
-    console.log('<remaining candidates can fill all vacancies>');
+    log_('<remaining candidates can fill all vacancies>');
     hopefuls.forEach(function (v) {
       elected.push(v);
-      console.log(_chalk2.default.white.bgGreen('----- elected', v, '-----'));
+      log_(_chalk2.default.white.bgGreen('----- elected', v, '-----'));
     });
-    console.log('********** COUNTING ENDS **********');
+    logTrue('********** COUNTING ENDS **********');
     return {
       elected: elected,
       counts: counts
     };
   }
 
-  console.log('########## ROUND', counts.length + 1, '##########');
+  log_('########## ROUND', counts.length + 1, '##########');
 
   if (quota === -1) {
     quota = Math.floor(votes.length / (seats + 1) + 1);
@@ -194,7 +178,7 @@ function round(votes, values, seats) {
   }
 
   counts.push(roundCount);
-  console.log('+++++ round count +++++');
+  log_('+++++ round count +++++');
   roundCountTable(roundCount);
 
   var excluded = [].concat(_toConsumableArray(elected), _toConsumableArray(eliminated));
@@ -205,11 +189,11 @@ function round(votes, values, seats) {
       hopefuls = hopefuls.filter(function (v) {
         return v !== elimCand;
       });
-      console.log(_chalk2.default.gray.bgYellow('----- eliminated', elimCand, '-----'));
+      log_(_chalk2.default.gray.bgYellow('----- eliminated', elimCand, '-----'));
     })();
   } else {
     roundElected.forEach(function (v) {
-      console.log(_chalk2.default.white.bgGreen('----- elected', v, '-----'));
+      log_(_chalk2.default.white.bgGreen('----- elected', v, '-----'));
       eliminate(votes, values, v, roundCount, hopefuls, excluded, surplus, counts, roundCount[v] - quota);
     });
   }
@@ -333,7 +317,7 @@ function distributeSurplus(votes, values, lastCounts, surplus) {
         }
       }
 
-      console.log(_chalk2.default.magenta('----- distributing surplus -----'));
+      log_(_chalk2.default.magenta('----- distributing surplus -----'));
       for (var _transfer in dist) {
         if (dist.hasOwnProperty(_transfer)) {
           tableCount[_transfer] = 0;
@@ -369,12 +353,12 @@ function distributeSurplus(votes, values, lastCounts, surplus) {
         }
       }
 
-      console.log(_chalk2.default.bold(candidate));
+      log_(_chalk2.default.bold(candidate));
       for (var _transfer2 in tableCount) {
-        if (tableCount[_transfer2]) console.log('- transfers', _chalk2.default.underline(tableCount[_transfer2]), 'vote(s) to', _chalk2.default.underline(_transfer2));
+        if (tableCount[_transfer2]) log_('- transfers', _chalk2.default.underline(tableCount[_transfer2]), 'vote(s) to', _chalk2.default.underline(_transfer2));
       }
 
-      console.log('-', _chalk2.default.bold('Transfer in total:'), _chalk2.default.underline(totalTransferred), _chalk2.default.bold('Exhausted:'), _chalk2.default.underline(surplus[candidate].surplus - totalTransferred));
+      log_('-', _chalk2.default.bold('Transfer in total:'), _chalk2.default.underline(totalTransferred), _chalk2.default.bold('Exhausted:'), _chalk2.default.underline(surplus[candidate].surplus - totalTransferred));
     }
   }
   return count;
@@ -445,17 +429,8 @@ function eliminate(votes, values, candidate, roundCount, hopefuls, excluded, sur
   return candidate;
 }
 
-/**
- * Breaks a tie in elimination step by returning the candidate with lowest
- * number of votes in the last round; if fails to break after counting all
- * previous rounds, a random candidate is returned
- * @param  {string[]} potentials List of tied candidates
- * @param  {Object[]} counts     History of votes received by the candidates in
- * previous rounds
- * @return {string}            Candidate to be eliminated after breaking the tie
- */
 function breakTie(potentials, counts) {
-  console.log('*a tie!*');
+  log_('*a tie!*');
   if (counts.length > 0) {
     var _ret5 = function () {
       var lastCount = counts[counts.length - 1];
@@ -470,14 +445,14 @@ function breakTie(potentials, counts) {
       if (potentialsTie.length <= 0) console.error('********** unable to continue elimination **********');
       if (potentialsTie.length === potentials.length) {
         var against = potentials[Math.floor(Math.random() * potentials.length)];
-        console.log('----- tie randomly broken against', against, '-----');
+        log_('----- tie randomly broken against', against, '-----');
         return {
           v: against
         };
       }
       if (potentialsTie.length === 1) {
         var _against = potentials[potentialsTie[0]];
-        console.log('----- tie broken against', _against, '-----');
+        log_('----- tie broken against', _against, '-----');
         return {
           v: _against
         };
@@ -500,40 +475,44 @@ function count(_ref) {
   var candidates = _ref.candidates;
   var seats = _ref.seats;
   var quota = _ref.quota;
+  var log = _ref.log;
 
-  console.log(_chalk2.default.underline('stvCount', VERSION, '(c) Z. Tong Zhang\n'));
-  console.log('********** COUNTING STARTS **********');
+  if (log === false) {
+    logging = false;
+  }
+  logTrue(_chalk2.default.underline('stvCount', VERSION, '(c) Z. Tong Zhang'));
+  logTrue('********** COUNTING STARTS **********');
 
   if (quota < 0) quota = Math.floor(votes.length / (seats + 1) + 1);
   var values = new Array(votes.length).fill(1);
   var result = round(votes, values, seats, quota, candidates, [], [], []);
 
-  console.log('votes #:', votes.length);
-  console.log('quota:', quota);
+  log_('votes #:', votes.length);
+  log_('quota:', quota);
   countsTable(result.counts, result.elected);
 
-  var elected = new Table({ head: [_chalk2.default.bold.green('ELECTED')] });
+  var elected = new _cliTable2.default({ head: [_chalk2.default.bold.green('ELECTED')] });
   result.elected.forEach(function (v) {
     return elected.push([v]);
   });
-  console.log(elected.toString());
+  log_(elected.toString());
 
   return result;
 }
 
 function roundCountTable(roundCount) {
-  var table = new Table();
+  var table = new _cliTable2.default();
   for (var candidate in roundCount) {
     table.push(_defineProperty({}, _chalk2.default.cyan.bold(candidate), roundCount[candidate]));
   }
-  return console.log(table.toString());
+  return log_(table.toString());
 }
 
 function countsTable(counts, elected) {
   var isElected = function isElected(candidate) {
     return elected.includes(candidate) ? _chalk2.default.bold.green('✓') : _chalk2.default.bold.red('✗');
   };
-  var table = new Table({
+  var table = new _cliTable2.default({
     head: [_chalk2.default.blue.bold('Round')].concat(_toConsumableArray(Array.from(new Array(counts.length), function (x, i) {
       return _chalk2.default.blue.bold(i + 1);
     })), [_chalk2.default.bold.green('Elected')])
@@ -549,7 +528,7 @@ function countsTable(counts, elected) {
     _loop3(candidate);
   }
 
-  return console.log(table.toString());
+  return log_(table.toString());
 }
 
 var options = require('../options.json');

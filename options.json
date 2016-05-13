@@ -3,5 +3,6 @@
   "candidates": ["Karomne Liberal / Libéral","Brotester Green / Vert","brendand19 NDP / NPD","Unionist Bloc Québécois","madrockets Independent / Indépendant","Spindleton Independent / Indépendant"
 ],
   "quota": -1,
-  "precision": 6
+  "precision": 6,
+  "log": true
 }

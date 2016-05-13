@@ -3,7 +3,11 @@ const VERSION = 'v16.05.1'
 import 'babel-polyfill';
 import _ from 'lodash';
 import chalk from 'chalk';
-const Table = require('cli-table');
+import Table from 'cli-table';
+
+let logging = true;
+const log_ = (args) => logging ? console.log(args) : {};
+const logTrue = (args) => console.log(args);
 
 function populate(votes) {
   let populated = [];
@@ -17,22 +21,6 @@ Number.prototype.round = function(places) {
   return +(Math.round(this + 'e+' + places)  + 'e-' + places);
 }
 
-/**
- * A single transferrable vote, containing an array of names of candidates
- * (`string`s) in order of preference indicated, i.e. first-preference vote is
- * at index `0`.
- * @typedef {string[][]} vote
- */
-
-/**
- * Counts a candidate's votes in a position on ranked ballot
- * @param {number} pref The position of preference at which the votes for the
- * candidate is counted, e.g. `pref = 1` to count first-preference votes
- * @param {string} cand Name of the candidate
- * @param {vote[]} votes Votes to be counted
- * @returns {number} Number of votes the candidate receives at the specified
- * position on the ballot
- */
 function countPref(pref, cand, votes) {
   let count = 0;
   votes.forEach((v, i, arr) => {
@@ -49,27 +37,11 @@ function getPref(pref, cand, votes) {
   return count;
 }
 
-/**
- * Does a round of counting for STV
- * @param  {vote[]} votes    Votes to be counted
- * @param  {number} seats    Number of seats available
- * @param  {number} [quota] Quota needed to declared a candidate elected;
- * defaults to Droop quota calculated from `votes.length` and `seats`
- * @param  {string[]} hopefuls List of candidates to be counted, i.e. neither
- * elected nor eliminated
- * @param  {string[]} eliminated List of candidates eliminated from counting
- * @param  {string[]} elected  List of already elected candidates
- * @param  {Object[]} counts   History of votes received by the candidates in
- * previous rounds
- * @param  {Object} [surplus = {}] Surplus votes to be redistributed from last
- * round; defaults to `{}`
- * @return {string[]}          List of all elected candidates after this round
- */
 function round(votes, values, seats, quota = -1, hopefuls, eliminated, elected,
   counts, surplus = {}) {
   if (elected.length === seats) {
-    console.log('<all vacancies filled>')
-    console.log('********** COUNTING ENDS **********');
+    log_('<all vacancies filled>')
+    logTrue('********** COUNTING ENDS **********');
     return {
       elected,
       counts,
@@ -77,19 +49,19 @@ function round(votes, values, seats, quota = -1, hopefuls, eliminated, elected,
   }
 
   if (hopefuls.length <= seats - elected.length) {
-    console.log('<remaining candidates can fill all vacancies>')
+    log_('<remaining candidates can fill all vacancies>')
     hopefuls.forEach(v => {
       elected.push(v);
-      console.log(chalk.white.bgGreen('----- elected', v, '-----'));
+      log_(chalk.white.bgGreen('----- elected', v, '-----'));
     });
-    console.log('********** COUNTING ENDS **********');
+    logTrue('********** COUNTING ENDS **********');
     return {
       elected,
       counts,
     };
   }
 
-  console.log('########## ROUND', counts.length + 1, '##########');
+  log_('########## ROUND', counts.length + 1, '##########');
 
   if (quota === -1) {
     quota = Math.floor(votes.length / (seats + 1) + 1);
@@ -121,7 +93,7 @@ function round(votes, values, seats, quota = -1, hopefuls, eliminated, elected,
   }
 
   counts.push(roundCount);
-  console.log('+++++ round count +++++');
+  log_('+++++ round count +++++');
   roundCountTable(roundCount);
 
   let excluded = [...elected, ...eliminated];
@@ -130,10 +102,10 @@ function round(votes, values, seats, quota = -1, hopefuls, eliminated, elected,
     surplus, counts);
     eliminated.push(elimCand);
     hopefuls = hopefuls.filter(v => v !== elimCand);
-    console.log(chalk.gray.bgYellow('----- eliminated', elimCand, '-----'));
+    log_(chalk.gray.bgYellow('----- eliminated', elimCand, '-----'));
   } else {
     roundElected.forEach(v => {
-      console.log(chalk.white.bgGreen('----- elected', v, '-----'));
+      log_(chalk.white.bgGreen('----- elected', v, '-----'));
       eliminate(votes, values, v, roundCount, hopefuls, excluded, surplus,
         counts, roundCount[v] - quota);
     });
@@ -188,7 +160,7 @@ function distributeSurplus(votes, values, lastCounts, surplus) {
         }
       }
 
-      console.log(chalk.magenta('----- distributing surplus -----'));
+      log_(chalk.magenta('----- distributing surplus -----'));
       for (let transfer in dist) {
         if (dist.hasOwnProperty(transfer)) {
           tableCount[transfer] = 0;
@@ -202,14 +174,14 @@ function distributeSurplus(votes, values, lastCounts, surplus) {
         }
       }
 
-      console.log(chalk.bold(candidate));
+      log_(chalk.bold(candidate));
       for (let transfer in tableCount) {
         if (tableCount[transfer])
-          console.log('- transfers', chalk.underline(tableCount[transfer]),
+          log_('- transfers', chalk.underline(tableCount[transfer]),
             'vote(s) to', chalk.underline(transfer));
       }
 
-      console.log('-', chalk.bold('Transfer in total:'),
+      log_('-', chalk.bold('Transfer in total:'),
         chalk.underline(totalTransferred), chalk.bold('Exhausted:'),
         chalk.underline(surplus[candidate].surplus - totalTransferred));
 
@@ -257,17 +229,8 @@ surplus, counts, surplusVotes = null) {
   return candidate;
 }
 
-/**
- * Breaks a tie in elimination step by returning the candidate with lowest
- * number of votes in the last round; if fails to break after counting all
- * previous rounds, a random candidate is returned
- * @param  {string[]} potentials List of tied candidates
- * @param  {Object[]} counts     History of votes received by the candidates in
- * previous rounds
- * @return {string}            Candidate to be eliminated after breaking the tie
- */
 function breakTie(potentials, counts) {
-  console.log('*a tie!*');
+  log_('*a tie!*');
   if (counts.length > 0) {
     let lastCount = counts[counts.length - 1];
     let lastCounts = _.pick(lastCount, potentials);
@@ -282,12 +245,12 @@ function breakTie(potentials, counts) {
       console.error('********** unable to continue elimination **********');
     if (potentialsTie.length === potentials.length) {
       let against = potentials[Math.floor(Math.random() * potentials.length)];
-      console.log('----- tie randomly broken against', against, '-----');
+      log_('----- tie randomly broken against', against, '-----');
       return against;
     }
     if (potentialsTie.length === 1) {
       let against = potentials[potentialsTie[0]];
-      console.log('----- tie broken against', against, '-----');
+      log_('----- tie broken against', against, '-----');
       return against;
     }
     let potentialCands = [];
@@ -298,21 +261,24 @@ function breakTie(potentials, counts) {
   }
 }
 
-function count({votes, candidates, seats, quota}) {
-  console.log(chalk.underline('stvCount', VERSION, '(c) Z. Tong Zhang\n'));
-  console.log('********** COUNTING STARTS **********')
+export function count({votes, candidates, seats, quota, log}) {
+  if (log === false) {
+    logging = false;
+  }
+  logTrue(chalk.underline('stvCount', VERSION, '(c) Z. Tong Zhang'));
+  logTrue('********** COUNTING STARTS **********')
 
   if (quota < 0) quota = Math.floor(votes.length / (seats + 1) + 1);
   let values = new Array(votes.length).fill(1);
   let result = round(votes, values, seats, quota, candidates, [], [], []);
 
-  console.log('votes #:', votes.length);
-  console.log('quota:', quota);
+  log_('votes #:', votes.length);
+  log_('quota:', quota);
   countsTable(result.counts, result.elected);
 
   let elected = new Table({head: [chalk.bold.green('ELECTED')]});
   result.elected.forEach(v => elected.push([v]));
-  console.log(elected.toString());
+  log_(elected.toString());
 
   return result;
 }
@@ -324,7 +290,7 @@ function roundCountTable(roundCount) {
       [chalk.cyan.bold(candidate)]: roundCount[candidate],
     });
   }
-  return console.log(table.toString());
+  return log_(table.toString());
 }
 
 function countsTable(counts, elected) {
@@ -344,7 +310,7 @@ function countsTable(counts, elected) {
     })
   }
 
-  return console.log(table.toString());
+  return log_(table.toString());
 }
 
 let options = require('../options.json');
