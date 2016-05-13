@@ -27,7 +27,7 @@ IRV election results in Model Canada (/r/cmhoc).
 STV counting is verified against openSTV 1.7. Past Model Canadian elections were
 not conducted exactly following the system.
 
-Sample result (IRV): http://pastebin.com/rWbB7er1
+See `result` for sample result (IRV).
 
 Usage
 -------
