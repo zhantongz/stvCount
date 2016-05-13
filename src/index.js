@@ -6,8 +6,8 @@ import chalk from 'chalk';
 import Table from 'cli-table';
 
 let logging = true;
-const log_ = (args) => logging ? console.log(args) : {};
-const logTrue = (args) => console.log(args);
+const log_ = (...args) => logging ? console.log(...args) : {};
+const logTrue = (...args) => console.log(...args);
 
 function populate(votes) {
   let populated = [];
@@ -19,6 +19,18 @@ function populate(votes) {
 
 Number.prototype.round = function(places) {
   return +(Math.round(this + 'e+' + places)  + 'e-' + places);
+}
+
+function getValues(object) {
+  let values = new Array;
+  for (let prop in object) {
+    values.push(object[prop]);
+  }
+  return values;
+}
+
+function getMin(array) {
+  return array.reduce((a, b) => Math.min(a, b));
 }
 
 function countPref(pref, cand, votes) {
@@ -37,8 +49,8 @@ function getPref(pref, cand, votes) {
   return count;
 }
 
-function round(votes, values, seats, quota = -1, hopefuls, eliminated, elected,
-  counts, surplus = {}) {
+function round(votes, values, seats, quota, hopefuls, eliminated, elected,
+  counts, surplus = {}, ron = '') {
   if (elected.length === seats) {
     log_('<all vacancies filled>')
     logTrue('********** COUNTING ENDS **********');
@@ -63,9 +75,6 @@ function round(votes, values, seats, quota = -1, hopefuls, eliminated, elected,
 
   log_('########## ROUND', counts.length + 1, '##########');
 
-  if (quota === -1) {
-    quota = Math.floor(votes.length / (seats + 1) + 1);
-  }
   let distributed = {};
   if (Object.keys(surplus).length > 0) {
     distributed = distributeSurplus(votes, values, counts[counts.length - 1],
@@ -99,7 +108,7 @@ function round(votes, values, seats, quota = -1, hopefuls, eliminated, elected,
   let excluded = [...elected, ...eliminated];
   if (roundElected.length === 0) {
     let elimCand = eliminate(votes, values, '', roundCount, hopefuls, excluded,
-    surplus, counts);
+    surplus, counts, ron);
     eliminated.push(elimCand);
     hopefuls = hopefuls.filter(v => v !== elimCand);
     log_(chalk.gray.bgYellow('----- eliminated', elimCand, '-----'));
@@ -107,13 +116,13 @@ function round(votes, values, seats, quota = -1, hopefuls, eliminated, elected,
     roundElected.forEach(v => {
       log_(chalk.white.bgGreen('----- elected', v, '-----'));
       eliminate(votes, values, v, roundCount, hopefuls, excluded, surplus,
-        counts, roundCount[v] - quota);
+        counts, ron, roundCount[v] - quota);
     });
   }
 
   if (counts.length < 20) {} else {return;}
   return round(votes, values, seats, quota, hopefuls, eliminated, elected,
-    counts, surplus);
+    counts, surplus, ron);
 }
 
 function countSurplus(votes, values, candidate, hopefuls, excluded) {
@@ -191,11 +200,21 @@ function distributeSurplus(votes, values, lastCounts, surplus) {
 }
 
 function eliminate(votes, values, candidate, roundCount, hopefuls, excluded,
-surplus, counts, surplusVotes = null) {
-
+surplus, counts, ron, surplusVotes = null) {
   if (candidate === '') {
-    candidate = Object.keys(roundCount);
-    let minVotes = _.min(_.values(roundCount));
+    candidate = Object.keys(roundCount).filter(v => v !== ron);
+    let minVotes = 0;
+    if (!ron) {
+      minVotes = getMin(getValues(roundCount));
+    } else {
+      let roundCount_ = Object.assign({}, roundCount);
+      if (roundCount_.hasOwnProperty(ron)) {
+        delete roundCount_[ron];
+      } else {
+        console.error(chalk.bold.red('***** RON candidate not found *****'));
+      }
+      minVotes = getMin(getValues(roundCount_));
+    }
     let potentials = [];
     candidate.forEach(function(val, ind) {
       if (roundCount[val] === minVotes) {
@@ -203,7 +222,8 @@ surplus, counts, surplusVotes = null) {
       }
     });
     if (potentials.length <= 0)
-      console.error('********** unable to continue elimination **********');
+      console.error(chalk.bold.red(
+        '********** unable to continue elimination **********'));
     if (potentials.length === 1) {
       candidate = candidate[potentials[0]];
     } else {
@@ -234,7 +254,7 @@ function breakTie(potentials, counts) {
   if (counts.length > 0) {
     let lastCount = counts[counts.length - 1];
     let lastCounts = _.pick(lastCount, potentials);
-    let minVotes = _.min(_.values(lastCounts));
+    let minVotes = getMin(getValues(lastCounts));
     let potentialsTie = [];
     potentials.forEach(function(val, ind) {
       if (lastCounts[val] === minVotes) {
@@ -261,17 +281,19 @@ function breakTie(potentials, counts) {
   }
 }
 
-export function count({votes, candidates, seats, quota, log}) {
+export function count({votes, candidates, seats, quota, log, ron}) {
   if (log === false) {
     logging = false;
   }
+
+  ron = ron || '';
   logTrue(chalk.underline('stvCount', VERSION, '(c) Z. Tong Zhang'));
   logTrue('********** COUNTING STARTS **********')
 
   if (quota < 0) quota = Math.floor(votes.length / (seats + 1) + 1);
   let values = new Array(votes.length).fill(1);
-  let result = round(votes, values, seats, quota, candidates, [], [], []);
-
+  let result = round(votes, values, seats, quota, candidates, [], [], [], {},
+    ron);
   log_('votes #:', votes.length);
   log_('quota:', quota);
   countsTable(result.counts, result.elected);

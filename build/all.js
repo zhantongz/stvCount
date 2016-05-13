@@ -31,11 +31,15 @@ function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr
 var VERSION = 'v16.05.1';
 
 var logging = true;
-var log_ = function log_(args) {
-  return logging ? console.log(args) : {};
+var log_ = function log_() {
+  var _console;
+
+  return logging ? (_console = console).log.apply(_console, arguments) : {};
 };
-var logTrue = function logTrue(args) {
-  return console.log(args);
+var logTrue = function logTrue() {
+  var _console2;
+
+  return (_console2 = console).log.apply(_console2, arguments);
 };
 
 function populate(votes) {
@@ -74,6 +78,20 @@ Number.prototype.round = function (places) {
   return +(Math.round(this + 'e+' + places) + 'e-' + places);
 };
 
+function getValues(object) {
+  var values = new Array();
+  for (var prop in object) {
+    values.push(object[prop]);
+  }
+  return values;
+}
+
+function getMin(array) {
+  return array.reduce(function (a, b) {
+    return Math.min(a, b);
+  });
+}
+
 function countPref(pref, cand, votes) {
   var count = 0;
   votes.forEach(function (v, i, arr) {
@@ -90,13 +108,9 @@ function getPref(pref, cand, votes) {
   return count;
 }
 
-function round(votes, values, seats) {
-  var quota = arguments.length <= 3 || arguments[3] === undefined ? -1 : arguments[3];
-  var hopefuls = arguments[4];
-  var eliminated = arguments[5];
-  var elected = arguments[6];
-  var counts = arguments[7];
+function round(votes, values, seats, quota, hopefuls, eliminated, elected, counts) {
   var surplus = arguments.length <= 8 || arguments[8] === undefined ? {} : arguments[8];
+  var ron = arguments.length <= 9 || arguments[9] === undefined ? '' : arguments[9];
 
   if (elected.length === seats) {
     log_('<all vacancies filled>');
@@ -122,9 +136,6 @@ function round(votes, values, seats) {
 
   log_('########## ROUND', counts.length + 1, '##########');
 
-  if (quota === -1) {
-    quota = Math.floor(votes.length / (seats + 1) + 1);
-  }
   var distributed = {};
   if (Object.keys(surplus).length > 0) {
     distributed = distributeSurplus(votes, values, counts[counts.length - 1], surplus);
@@ -184,7 +195,7 @@ function round(votes, values, seats) {
   var excluded = [].concat(_toConsumableArray(elected), _toConsumableArray(eliminated));
   if (roundElected.length === 0) {
     (function () {
-      var elimCand = eliminate(votes, values, '', roundCount, hopefuls, excluded, surplus, counts);
+      var elimCand = eliminate(votes, values, '', roundCount, hopefuls, excluded, surplus, counts, ron);
       eliminated.push(elimCand);
       hopefuls = hopefuls.filter(function (v) {
         return v !== elimCand;
@@ -194,14 +205,14 @@ function round(votes, values, seats) {
   } else {
     roundElected.forEach(function (v) {
       log_(_chalk2.default.white.bgGreen('----- elected', v, '-----'));
-      eliminate(votes, values, v, roundCount, hopefuls, excluded, surplus, counts, roundCount[v] - quota);
+      eliminate(votes, values, v, roundCount, hopefuls, excluded, surplus, counts, ron, roundCount[v] - quota);
     });
   }
 
   if (counts.length < 20) {} else {
     return;
   }
-  return round(votes, values, seats, quota, hopefuls, eliminated, elected, counts, surplus);
+  return round(votes, values, seats, quota, hopefuls, eliminated, elected, counts, surplus, ron);
 }
 
 function countSurplus(votes, values, candidate, hopefuls, excluded) {
@@ -364,21 +375,33 @@ function distributeSurplus(votes, values, lastCounts, surplus) {
   return count;
 }
 
-function eliminate(votes, values, candidate, roundCount, hopefuls, excluded, surplus, counts) {
-  var surplusVotes = arguments.length <= 8 || arguments[8] === undefined ? null : arguments[8];
-
+function eliminate(votes, values, candidate, roundCount, hopefuls, excluded, surplus, counts, ron) {
+  var surplusVotes = arguments.length <= 9 || arguments[9] === undefined ? null : arguments[9];
 
   if (candidate === '') {
     (function () {
-      candidate = Object.keys(roundCount);
-      var minVotes = _lodash2.default.min(_lodash2.default.values(roundCount));
+      candidate = Object.keys(roundCount).filter(function (v) {
+        return v !== ron;
+      });
+      var minVotes = 0;
+      if (!ron) {
+        minVotes = getMin(getValues(roundCount));
+      } else {
+        var roundCount_ = Object.assign({}, roundCount);
+        if (roundCount_.hasOwnProperty(ron)) {
+          delete roundCount_[ron];
+        } else {
+          console.error(_chalk2.default.bold.red('***** RON candidate not found *****'));
+        }
+        minVotes = getMin(getValues(roundCount_));
+      }
       var potentials = [];
       candidate.forEach(function (val, ind) {
         if (roundCount[val] === minVotes) {
           potentials.push(ind);
         }
       });
-      if (potentials.length <= 0) console.error('********** unable to continue elimination **********');
+      if (potentials.length <= 0) console.error(_chalk2.default.bold.red('********** unable to continue elimination **********'));
       if (potentials.length === 1) {
         candidate = candidate[potentials[0]];
       } else {
@@ -435,7 +458,7 @@ function breakTie(potentials, counts) {
     var _ret5 = function () {
       var lastCount = counts[counts.length - 1];
       var lastCounts = _lodash2.default.pick(lastCount, potentials);
-      var minVotes = _lodash2.default.min(_lodash2.default.values(lastCounts));
+      var minVotes = getMin(getValues(lastCounts));
       var potentialsTie = [];
       potentials.forEach(function (val, ind) {
         if (lastCounts[val] === minVotes) {
@@ -476,17 +499,19 @@ function count(_ref) {
   var seats = _ref.seats;
   var quota = _ref.quota;
   var log = _ref.log;
+  var ron = _ref.ron;
 
   if (log === false) {
     logging = false;
   }
+
+  ron = ron || '';
   logTrue(_chalk2.default.underline('stvCount', VERSION, '(c) Z. Tong Zhang'));
   logTrue('********** COUNTING STARTS **********');
 
   if (quota < 0) quota = Math.floor(votes.length / (seats + 1) + 1);
   var values = new Array(votes.length).fill(1);
-  var result = round(votes, values, seats, quota, candidates, [], [], []);
-
+  var result = round(votes, values, seats, quota, candidates, [], [], [], {}, ron);
   log_('votes #:', votes.length);
   log_('quota:', quota);
   countsTable(result.counts, result.elected);
