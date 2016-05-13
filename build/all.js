@@ -371,7 +371,7 @@ function distributeSurplus(votes, values, lastCounts, surplus) {
 
       console.log(_chalk2.default.bold(candidate));
       for (var _transfer2 in tableCount) {
-        if (tableCount[_transfer2]) console.log('- transfers', _chalk2.default.underline(tableCount[_transfer2]), 'votes to', _chalk2.default.underline(_transfer2));
+        if (tableCount[_transfer2]) console.log('- transfers', _chalk2.default.underline(tableCount[_transfer2]), 'vote(s) to', _chalk2.default.underline(_transfer2));
       }
 
       console.log('-', _chalk2.default.bold('Transfer in total:'), _chalk2.default.underline(totalTransferred), _chalk2.default.bold('Exhausted:'), _chalk2.default.underline(surplus[candidate].surplus - totalTransferred));

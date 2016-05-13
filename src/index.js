@@ -163,7 +163,7 @@ function countSurplus(votes, values, candidate, hopefuls, excluded) {
   }
 
   return {
-    dist: surplus
+    dist: surplus,
   };
 }
 
@@ -175,8 +175,8 @@ function distributeSurplus(votes, values, lastCounts, surplus) {
       totalTransferred = 0;
       let tableCount = {};
       let dist = surplus[candidate].dist;
-      if(surplus[candidate].surplus < count[candidate]) {
-        if(count[candidate] > 0) {
+      if (surplus[candidate].surplus < count[candidate]) {
+        if (count[candidate] > 0) {
           let value = surplus[candidate].surplus / count[candidate];
           for (let transfer in dist) {
             if (dist.hasOwnProperty(transfer)) {
@@ -206,7 +206,7 @@ function distributeSurplus(votes, values, lastCounts, surplus) {
       for (let transfer in tableCount) {
         if (tableCount[transfer])
           console.log('- transfers', chalk.underline(tableCount[transfer]),
-            'votes to', chalk.underline(transfer));
+            'vote(s) to', chalk.underline(transfer));
       }
 
       console.log('-', chalk.bold('Transfer in total:'),
@@ -319,7 +319,7 @@ function count({votes, candidates, seats, quota}) {
 
 function roundCountTable(roundCount) {
   let table = new Table();
-  for(let candidate in roundCount) {
+  for (let candidate in roundCount) {
     table.push({
       [chalk.cyan.bold(candidate)]: roundCount[candidate],
     });
@@ -332,7 +332,7 @@ function countsTable(counts, elected) {
     chalk.bold.green('✓') : chalk.bold.red('✗');
   let table = new Table({
     head: [chalk.blue.bold('Round'), ...Array.from(new Array(counts.length),
-      (x, i) => chalk.blue.bold(i + 1)), chalk.bold.green('Elected')],
+      (x, i) => chalk.blue.bold(i + 1)), chalk.bold.green('Elected'),],
   });
 
   for (let candidate in counts[0]) {
@@ -340,7 +340,7 @@ function countsTable(counts, elected) {
       [chalk.cyan.bold(candidate)]: [...Array.from(new Array(counts.length),
         (x, i) => candidate in counts[i] ?
           counts[i][candidate] : isElected(candidate)),
-        isElected(candidate)],
+        isElected(candidate),],
     })
   }
 
