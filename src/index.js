@@ -1,13 +1,15 @@
 const VERSION = 'v16.05.1'
 
 import 'babel-polyfill';
-import _ from 'lodash';
 import chalk from 'chalk';
 import Table from 'cli-table';
+const Converter = require('csvtojson').Converter;
 
 let logging = true;
 const log_ = (...args) => logging ? console.log(...args) : {};
 const logTrue = (...args) => console.log(...args);
+
+let precision = 6;
 
 function populate(votes) {
   let populated = [];
@@ -31,6 +33,20 @@ function getValues(object) {
 
 function getMin(array) {
   return array.reduce((a, b) => Math.min(a, b));
+}
+
+function pick(object, ...fields) {
+  let o = {};
+  for (let field of fields) {
+    Object.assign(o, {[field]: object[field]});
+  }
+
+  return o;
+}
+
+function removeBlanks(object) {
+  return pick(object,
+    ...Object.keys(object).filter(key => object[key] || object[key] === 0));
 }
 
 function countPref(pref, cand, votes) {
@@ -127,8 +143,8 @@ function round(votes, values, seats, quota, hopefuls, eliminated, elected,
 
 function countSurplus(votes, values, candidate, hopefuls, excluded) {
   let surplus = {};
-  let transferred = _.cloneDeep(votes).map((val, ind, arr) => {
-    if (val[0] === candidate) return val;
+  let transferred = votes.map((val, ind, arr) => {
+    if (val[0] === candidate) return val.slice();
     return [];
   });
   let total = transferred.length;
@@ -179,7 +195,7 @@ function distributeSurplus(votes, values, lastCounts, surplus) {
             tableCount[transfer] += values[nextPref];
             totalTransferred += values[nextPref];
           }
-          count[transfer] = count[transfer].round(PRECISION);
+          count[transfer] = count[transfer].round(precision);
         }
       }
 
@@ -253,7 +269,7 @@ function breakTie(potentials, counts) {
   log_('*a tie!*');
   if (counts.length > 0) {
     let lastCount = counts[counts.length - 1];
-    let lastCounts = _.pick(lastCount, potentials);
+    let lastCounts = pick(lastCount, ...potentials);
     let minVotes = getMin(getValues(lastCounts));
     let potentialsTie = [];
     potentials.forEach(function(val, ind) {
@@ -279,30 +295,6 @@ function breakTie(potentials, counts) {
     }
     return breakTie(potentialCands, counts.slice(0, -1));
   }
-}
-
-export function count({votes, candidates, seats, quota, log, ron}) {
-  if (log === false) {
-    logging = false;
-  }
-
-  ron = ron || '';
-  logTrue(chalk.underline('stvCount', VERSION, '(c) Z. Tong Zhang'));
-  logTrue('********** COUNTING STARTS **********')
-
-  if (quota < 0) quota = Math.floor(votes.length / (seats + 1) + 1);
-  let values = new Array(votes.length).fill(1);
-  let result = round(votes, values, seats, quota, candidates, [], [], [], {},
-    ron);
-  log_('votes #:', votes.length);
-  log_('quota:', quota);
-  countsTable(result.counts, result.elected);
-
-  let elected = new Table({head: [chalk.bold.green('ELECTED')]});
-  result.elected.forEach(v => elected.push([v]));
-  log_(elected.toString());
-
-  return result;
 }
 
 function roundCountTable(roundCount) {
@@ -335,26 +327,72 @@ function countsTable(counts, elected) {
   return log_(table.toString());
 }
 
-let options = require('../options.json');
-const PRECISION = options.precision || 6;
-const Converter = require('csvtojson').Converter;
-let converter = new Converter({});
+function getCandidates(votes) {
+  return [...new Set([].concat(...votes))];
+}
 
-converter.on('end_parsed', jsonArray => {
-  let votes = [];
-  let ind = 0;
-  for (let vote of jsonArray) {
-    vote = _.pickBy(vote, _.identity);
-    let voteArray = Object.keys(vote).sort((a, b) => vote[a] - vote[b]);
-    let temp = [];
-    for (let i of voteArray)
-      i && temp.push(i);
-
-    voteArray = temp;
-    votes[ind++] = voteArray;
+export function count({votes, candidates, seats, quota, log, ron}) {
+  if (log === false) {
+    logging = false;
   }
-  options.votes = votes;
-  count(options);
-});
 
-require('fs').createReadStream('./votes.csv').pipe(converter);
+  ron = ron || '';
+  logTrue(chalk.underline('stvCount', VERSION, '(c) Z. Tong Zhang'));
+  logTrue('********** COUNTING STARTS **********')
+
+  if (quota < 0) quota = Math.floor(votes.length / (seats + 1) + 1);
+  let values = new Array(votes.length).fill(1);
+  let result = round(votes, values, seats, quota, candidates, [], [], [], {},
+    ron);
+  log_('votes #:', votes.length);
+  log_('quota:', quota);
+  countsTable(result.counts, result.elected);
+
+  let elected = new Table({head: [chalk.bold.green('ELECTED')]});
+  result.elected.forEach(v => elected.push([v]));
+  log_(elected.toString());
+
+  return result;
+}
+
+export function csvCount(csv, options) {
+  precision = options.precision || 6;
+  let converter = new Converter({});
+  converter.on('end_parsed', jsonArray => {
+    let votes = [];
+    let ind = 0;
+    for (let vote of jsonArray) {
+      vote = removeBlanks(vote);
+      let voteArray = Object.keys(vote).sort((a, b) => vote[a] - vote[b]);
+      let temp = [];
+      for (let i of voteArray)
+        i && temp.push(i);
+
+      voteArray = temp;
+      votes[ind++] = voteArray;
+    }
+    options.votes = votes;
+    options.candidates = getCandidates(votes);
+    return count(options);
+  });
+
+  if (typeof csv.pipe === 'function') {
+    csv.resume().pipe(converter);
+  } else if (typeof csv === 'string') {
+    converter.fromString(csv);
+  } else {
+    console.error('Error: CSV stream or string needed');
+  }
+}
+
+export function jsonCount(json, options) {
+  precision = options.precision || 6;
+  options.votes = json;
+  options.candidates = getCandidates(json);
+
+  return count(options);
+}
+
+export function bltCount(blt, options) {
+
+}

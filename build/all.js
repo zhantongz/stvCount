@@ -7,12 +7,11 @@ Object.defineProperty(exports, "__esModule", {
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
 exports.count = count;
+exports.csvCount = csvCount;
+exports.jsonCount = jsonCount;
+exports.bltCount = bltCount;
 
 require('babel-polyfill');
-
-var _lodash = require('lodash');
-
-var _lodash2 = _interopRequireDefault(_lodash);
 
 var _chalk = require('chalk');
 
@@ -24,11 +23,13 @@ var _cliTable2 = _interopRequireDefault(_cliTable);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
 
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 var VERSION = 'v16.05.1';
+
+var Converter = require('csvtojson').Converter;
 
 var logging = true;
 var log_ = function log_() {
@@ -41,6 +42,8 @@ var logTrue = function logTrue() {
 
   return (_console2 = console).log.apply(_console2, arguments);
 };
+
+var precision = 6;
 
 function populate(votes) {
   var populated = [];
@@ -90,6 +93,47 @@ function getMin(array) {
   return array.reduce(function (a, b) {
     return Math.min(a, b);
   });
+}
+
+function pick(object) {
+  var o = {};
+
+  for (var _len = arguments.length, fields = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+    fields[_key - 1] = arguments[_key];
+  }
+
+  var _iteratorNormalCompletion2 = true;
+  var _didIteratorError2 = false;
+  var _iteratorError2 = undefined;
+
+  try {
+    for (var _iterator2 = fields[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+      var field = _step2.value;
+
+      Object.assign(o, _defineProperty({}, field, object[field]));
+    }
+  } catch (err) {
+    _didIteratorError2 = true;
+    _iteratorError2 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion2 && _iterator2.return) {
+        _iterator2.return();
+      }
+    } finally {
+      if (_didIteratorError2) {
+        throw _iteratorError2;
+      }
+    }
+  }
+
+  return o;
+}
+
+function removeBlanks(object) {
+  return pick.apply(undefined, [object].concat(_toConsumableArray(Object.keys(object).filter(function (key) {
+    return object[key] || object[key] === 0;
+  }))));
 }
 
 function countPref(pref, cand, votes) {
@@ -146,13 +190,13 @@ function round(votes, values, seats, quota, hopefuls, eliminated, elected, count
   var roundElected = [];
   var hasElected = false;
 
-  var _iteratorNormalCompletion2 = true;
-  var _didIteratorError2 = false;
-  var _iteratorError2 = undefined;
+  var _iteratorNormalCompletion3 = true;
+  var _didIteratorError3 = false;
+  var _iteratorError3 = undefined;
 
   try {
     var _loop = function _loop() {
-      var v = _step2.value;
+      var v = _step3.value;
 
       var count = 0;
       if (counts.length === 0) {
@@ -170,20 +214,20 @@ function round(votes, values, seats, quota, hopefuls, eliminated, elected, count
       }
     };
 
-    for (var _iterator2 = hopefuls[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+    for (var _iterator3 = hopefuls[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
       _loop();
     }
   } catch (err) {
-    _didIteratorError2 = true;
-    _iteratorError2 = err;
+    _didIteratorError3 = true;
+    _iteratorError3 = err;
   } finally {
     try {
-      if (!_iteratorNormalCompletion2 && _iterator2.return) {
-        _iterator2.return();
+      if (!_iteratorNormalCompletion3 && _iterator3.return) {
+        _iterator3.return();
       }
     } finally {
-      if (_didIteratorError2) {
-        throw _iteratorError2;
+      if (_didIteratorError3) {
+        throw _iteratorError3;
       }
     }
   }
@@ -217,19 +261,19 @@ function round(votes, values, seats, quota, hopefuls, eliminated, elected, count
 
 function countSurplus(votes, values, candidate, hopefuls, excluded) {
   var surplus = {};
-  var transferred = _lodash2.default.cloneDeep(votes).map(function (val, ind, arr) {
-    if (val[0] === candidate) return val;
+  var transferred = votes.map(function (val, ind, arr) {
+    if (val[0] === candidate) return val.slice();
     return [];
   });
   var total = transferred.length;
 
-  var _iteratorNormalCompletion3 = true;
-  var _didIteratorError3 = false;
-  var _iteratorError3 = undefined;
+  var _iteratorNormalCompletion4 = true;
+  var _didIteratorError4 = false;
+  var _iteratorError4 = undefined;
 
   try {
     var _loop2 = function _loop2() {
-      var exclude = _step3.value;
+      var exclude = _step4.value;
 
       transferred.forEach(function (val, ind, arr) {
         transferred[ind] = val.filter(function (v) {
@@ -238,33 +282,8 @@ function countSurplus(votes, values, candidate, hopefuls, excluded) {
       });
     };
 
-    for (var _iterator3 = excluded[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+    for (var _iterator4 = excluded[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
       _loop2();
-    }
-  } catch (err) {
-    _didIteratorError3 = true;
-    _iteratorError3 = err;
-  } finally {
-    try {
-      if (!_iteratorNormalCompletion3 && _iterator3.return) {
-        _iterator3.return();
-      }
-    } finally {
-      if (_didIteratorError3) {
-        throw _iteratorError3;
-      }
-    }
-  }
-
-  var _iteratorNormalCompletion4 = true;
-  var _didIteratorError4 = false;
-  var _iteratorError4 = undefined;
-
-  try {
-    for (var _iterator4 = hopefuls[Symbol.iterator](), _step4; !(_iteratorNormalCompletion4 = (_step4 = _iterator4.next()).done); _iteratorNormalCompletion4 = true) {
-      var hopeful = _step4.value;
-
-      surplus[hopeful] = getPref(1, hopeful, transferred);
     }
   } catch (err) {
     _didIteratorError4 = true;
@@ -277,6 +296,31 @@ function countSurplus(votes, values, candidate, hopefuls, excluded) {
     } finally {
       if (_didIteratorError4) {
         throw _iteratorError4;
+      }
+    }
+  }
+
+  var _iteratorNormalCompletion5 = true;
+  var _didIteratorError5 = false;
+  var _iteratorError5 = undefined;
+
+  try {
+    for (var _iterator5 = hopefuls[Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
+      var hopeful = _step5.value;
+
+      surplus[hopeful] = getPref(1, hopeful, transferred);
+    }
+  } catch (err) {
+    _didIteratorError5 = true;
+    _iteratorError5 = err;
+  } finally {
+    try {
+      if (!_iteratorNormalCompletion5 && _iterator5.return) {
+        _iterator5.return();
+      }
+    } finally {
+      if (_didIteratorError5) {
+        throw _iteratorError5;
       }
     }
   }
@@ -299,27 +343,27 @@ function distributeSurplus(votes, values, lastCounts, surplus) {
           var value = surplus[candidate].surplus / count[candidate];
           for (var transfer in dist) {
             if (dist.hasOwnProperty(transfer)) {
-              var _iteratorNormalCompletion5 = true;
-              var _didIteratorError5 = false;
-              var _iteratorError5 = undefined;
+              var _iteratorNormalCompletion6 = true;
+              var _didIteratorError6 = false;
+              var _iteratorError6 = undefined;
 
               try {
-                for (var _iterator5 = dist[transfer][Symbol.iterator](), _step5; !(_iteratorNormalCompletion5 = (_step5 = _iterator5.next()).done); _iteratorNormalCompletion5 = true) {
-                  var nextPref = _step5.value;
+                for (var _iterator6 = dist[transfer][Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
+                  var nextPref = _step6.value;
 
                   values[nextPref] *= value;
                 }
               } catch (err) {
-                _didIteratorError5 = true;
-                _iteratorError5 = err;
+                _didIteratorError6 = true;
+                _iteratorError6 = err;
               } finally {
                 try {
-                  if (!_iteratorNormalCompletion5 && _iterator5.return) {
-                    _iterator5.return();
+                  if (!_iteratorNormalCompletion6 && _iterator6.return) {
+                    _iterator6.return();
                   }
                 } finally {
-                  if (_didIteratorError5) {
-                    throw _iteratorError5;
+                  if (_didIteratorError6) {
+                    throw _iteratorError6;
                   }
                 }
               }
@@ -332,13 +376,13 @@ function distributeSurplus(votes, values, lastCounts, surplus) {
       for (var _transfer in dist) {
         if (dist.hasOwnProperty(_transfer)) {
           tableCount[_transfer] = 0;
-          var _iteratorNormalCompletion6 = true;
-          var _didIteratorError6 = false;
-          var _iteratorError6 = undefined;
+          var _iteratorNormalCompletion7 = true;
+          var _didIteratorError7 = false;
+          var _iteratorError7 = undefined;
 
           try {
-            for (var _iterator6 = dist[_transfer][Symbol.iterator](), _step6; !(_iteratorNormalCompletion6 = (_step6 = _iterator6.next()).done); _iteratorNormalCompletion6 = true) {
-              var _nextPref = _step6.value;
+            for (var _iterator7 = dist[_transfer][Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
+              var _nextPref = _step7.value;
 
               count[_transfer] += values[_nextPref];
 
@@ -346,21 +390,21 @@ function distributeSurplus(votes, values, lastCounts, surplus) {
               totalTransferred += values[_nextPref];
             }
           } catch (err) {
-            _didIteratorError6 = true;
-            _iteratorError6 = err;
+            _didIteratorError7 = true;
+            _iteratorError7 = err;
           } finally {
             try {
-              if (!_iteratorNormalCompletion6 && _iterator6.return) {
-                _iterator6.return();
+              if (!_iteratorNormalCompletion7 && _iterator7.return) {
+                _iterator7.return();
               }
             } finally {
-              if (_didIteratorError6) {
-                throw _iteratorError6;
+              if (_didIteratorError7) {
+                throw _iteratorError7;
               }
             }
           }
 
-          count[_transfer] = count[_transfer].round(PRECISION);
+          count[_transfer] = count[_transfer].round(precision);
         }
       }
 
@@ -406,27 +450,27 @@ function eliminate(votes, values, candidate, roundCount, hopefuls, excluded, sur
         candidate = candidate[potentials[0]];
       } else {
         var potentialCands = [];
-        var _iteratorNormalCompletion7 = true;
-        var _didIteratorError7 = false;
-        var _iteratorError7 = undefined;
+        var _iteratorNormalCompletion8 = true;
+        var _didIteratorError8 = false;
+        var _iteratorError8 = undefined;
 
         try {
-          for (var _iterator7 = potentials[Symbol.iterator](), _step7; !(_iteratorNormalCompletion7 = (_step7 = _iterator7.next()).done); _iteratorNormalCompletion7 = true) {
-            var ind = _step7.value;
+          for (var _iterator8 = potentials[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
+            var ind = _step8.value;
 
             potentialCands.push(candidate[ind]);
           }
         } catch (err) {
-          _didIteratorError7 = true;
-          _iteratorError7 = err;
+          _didIteratorError8 = true;
+          _iteratorError8 = err;
         } finally {
           try {
-            if (!_iteratorNormalCompletion7 && _iterator7.return) {
-              _iterator7.return();
+            if (!_iteratorNormalCompletion8 && _iterator8.return) {
+              _iterator8.return();
             }
           } finally {
-            if (_didIteratorError7) {
-              throw _iteratorError7;
+            if (_didIteratorError8) {
+              throw _iteratorError8;
             }
           }
         }
@@ -457,7 +501,7 @@ function breakTie(potentials, counts) {
   if (counts.length > 0) {
     var _ret5 = function () {
       var lastCount = counts[counts.length - 1];
-      var lastCounts = _lodash2.default.pick(lastCount, potentials);
+      var lastCounts = pick.apply(undefined, [lastCount].concat(_toConsumableArray(potentials)));
       var minVotes = getMin(getValues(lastCounts));
       var potentialsTie = [];
       potentials.forEach(function (val, ind) {
@@ -493,38 +537,6 @@ function breakTie(potentials, counts) {
   }
 }
 
-function count(_ref) {
-  var votes = _ref.votes;
-  var candidates = _ref.candidates;
-  var seats = _ref.seats;
-  var quota = _ref.quota;
-  var log = _ref.log;
-  var ron = _ref.ron;
-
-  if (log === false) {
-    logging = false;
-  }
-
-  ron = ron || '';
-  logTrue(_chalk2.default.underline('stvCount', VERSION, '(c) Z. Tong Zhang'));
-  logTrue('********** COUNTING STARTS **********');
-
-  if (quota < 0) quota = Math.floor(votes.length / (seats + 1) + 1);
-  var values = new Array(votes.length).fill(1);
-  var result = round(votes, values, seats, quota, candidates, [], [], [], {}, ron);
-  log_('votes #:', votes.length);
-  log_('quota:', quota);
-  countsTable(result.counts, result.elected);
-
-  var elected = new _cliTable2.default({ head: [_chalk2.default.bold.green('ELECTED')] });
-  result.elected.forEach(function (v) {
-    return elected.push([v]);
-  });
-  log_(elected.toString());
-
-  return result;
-}
-
 function roundCountTable(roundCount) {
   var table = new _cliTable2.default();
   for (var candidate in roundCount) {
@@ -556,77 +568,131 @@ function countsTable(counts, elected) {
   return log_(table.toString());
 }
 
-var options = require('../options.json');
-var PRECISION = options.precision || 6;
-var Converter = require('csvtojson').Converter;
-var converter = new Converter({});
+function getCandidates(votes) {
+  var _ref;
 
-converter.on('end_parsed', function (jsonArray) {
-  var votes = [];
-  var ind = 0;
-  var _iteratorNormalCompletion8 = true;
-  var _didIteratorError8 = false;
-  var _iteratorError8 = undefined;
+  return [].concat(_toConsumableArray(new Set((_ref = []).concat.apply(_ref, _toConsumableArray(votes)))));
+}
 
-  try {
-    var _loop4 = function _loop4() {
-      var vote = _step8.value;
+function count(_ref2) {
+  var votes = _ref2.votes;
+  var candidates = _ref2.candidates;
+  var seats = _ref2.seats;
+  var quota = _ref2.quota;
+  var log = _ref2.log;
+  var ron = _ref2.ron;
 
-      vote = _lodash2.default.pickBy(vote, _lodash2.default.identity);
-      var voteArray = Object.keys(vote).sort(function (a, b) {
-        return vote[a] - vote[b];
-      });
-      var temp = [];
-      var _iteratorNormalCompletion9 = true;
-      var _didIteratorError9 = false;
-      var _iteratorError9 = undefined;
-
-      try {
-        for (var _iterator9 = voteArray[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
-          var i = _step9.value;
-
-          i && temp.push(i);
-        }
-      } catch (err) {
-        _didIteratorError9 = true;
-        _iteratorError9 = err;
-      } finally {
-        try {
-          if (!_iteratorNormalCompletion9 && _iterator9.return) {
-            _iterator9.return();
-          }
-        } finally {
-          if (_didIteratorError9) {
-            throw _iteratorError9;
-          }
-        }
-      }
-
-      voteArray = temp;
-      votes[ind++] = voteArray;
-    };
-
-    for (var _iterator8 = jsonArray[Symbol.iterator](), _step8; !(_iteratorNormalCompletion8 = (_step8 = _iterator8.next()).done); _iteratorNormalCompletion8 = true) {
-      _loop4();
-    }
-  } catch (err) {
-    _didIteratorError8 = true;
-    _iteratorError8 = err;
-  } finally {
-    try {
-      if (!_iteratorNormalCompletion8 && _iterator8.return) {
-        _iterator8.return();
-      }
-    } finally {
-      if (_didIteratorError8) {
-        throw _iteratorError8;
-      }
-    }
+  if (log === false) {
+    logging = false;
   }
 
-  options.votes = votes;
-  count(options);
-});
+  ron = ron || '';
+  logTrue(_chalk2.default.underline('stvCount', VERSION, '(c) Z. Tong Zhang'));
+  logTrue('********** COUNTING STARTS **********');
 
-require('fs').createReadStream('./votes.csv').pipe(converter);
+  if (quota < 0) quota = Math.floor(votes.length / (seats + 1) + 1);
+  var values = new Array(votes.length).fill(1);
+  var result = round(votes, values, seats, quota, candidates, [], [], [], {}, ron);
+  log_('votes #:', votes.length);
+  log_('quota:', quota);
+  countsTable(result.counts, result.elected);
+
+  var elected = new _cliTable2.default({ head: [_chalk2.default.bold.green('ELECTED')] });
+  result.elected.forEach(function (v) {
+    return elected.push([v]);
+  });
+  log_(elected.toString());
+
+  return result;
+}
+
+function csvCount(csv, options) {
+  precision = options.precision || 6;
+  var converter = new Converter({});
+  converter.on('end_parsed', function (jsonArray) {
+    var votes = [];
+    var ind = 0;
+    var _iteratorNormalCompletion9 = true;
+    var _didIteratorError9 = false;
+    var _iteratorError9 = undefined;
+
+    try {
+      var _loop4 = function _loop4() {
+        var vote = _step9.value;
+
+        vote = removeBlanks(vote);
+        var voteArray = Object.keys(vote).sort(function (a, b) {
+          return vote[a] - vote[b];
+        });
+        var temp = [];
+        var _iteratorNormalCompletion10 = true;
+        var _didIteratorError10 = false;
+        var _iteratorError10 = undefined;
+
+        try {
+          for (var _iterator10 = voteArray[Symbol.iterator](), _step10; !(_iteratorNormalCompletion10 = (_step10 = _iterator10.next()).done); _iteratorNormalCompletion10 = true) {
+            var i = _step10.value;
+
+            i && temp.push(i);
+          }
+        } catch (err) {
+          _didIteratorError10 = true;
+          _iteratorError10 = err;
+        } finally {
+          try {
+            if (!_iteratorNormalCompletion10 && _iterator10.return) {
+              _iterator10.return();
+            }
+          } finally {
+            if (_didIteratorError10) {
+              throw _iteratorError10;
+            }
+          }
+        }
+
+        voteArray = temp;
+        votes[ind++] = voteArray;
+      };
+
+      for (var _iterator9 = jsonArray[Symbol.iterator](), _step9; !(_iteratorNormalCompletion9 = (_step9 = _iterator9.next()).done); _iteratorNormalCompletion9 = true) {
+        _loop4();
+      }
+    } catch (err) {
+      _didIteratorError9 = true;
+      _iteratorError9 = err;
+    } finally {
+      try {
+        if (!_iteratorNormalCompletion9 && _iterator9.return) {
+          _iterator9.return();
+        }
+      } finally {
+        if (_didIteratorError9) {
+          throw _iteratorError9;
+        }
+      }
+    }
+
+    options.votes = votes;
+    options.candidates = getCandidates(votes);
+    return count(options);
+  });
+
+  if (typeof csv.pipe === 'function') {
+    csv.resume().pipe(converter);
+  } else if (typeof csv === 'string') {
+    converter.fromString(csv);
+  } else {
+    console.error('Error: CSV stream or string needed');
+  }
+}
+
+function jsonCount(json, options) {
+  precision = options.precision || 6;
+  options.votes = json;
+  options.candidates = getCandidates(json);
+
+  return count(options);
+}
+
+function bltCount(blt, options) {}
 //# sourceMappingURL=all.js.map
