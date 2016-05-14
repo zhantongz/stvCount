@@ -673,7 +673,7 @@ function csvCount(csv, options) {
     }
 
     options.votes = votes;
-    options.candidates = getCandidates(votes);
+    options.candidates = options.candidates || getCandidates(json);
     return count(options);
   });
 
@@ -689,7 +689,7 @@ function csvCount(csv, options) {
 function jsonCount(json, options) {
   precision = options.precision || 6;
   options.votes = json;
-  options.candidates = getCandidates(json);
+  options.candidates = options.candidates || getCandidates(json);
 
   return count(options);
 }

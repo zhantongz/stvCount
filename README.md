@@ -35,10 +35,16 @@ Usage
 
 ```
 npm install
-node build/all.js
+./stvCount [[--options|-o] <options_file>] [--csv|--json] <file_name>
 ```
 
-### `options.json`
+### Command line flags
+* **--csv** <*file_name*>: count votes from reading a CSV ballot file
+* **--json** <*file_name*>: count votes from reading a JSON ballot file
+* **--option** <*options_file*>: specify an options file. Default:
+`options.json` (under working directory)
+
+### Options file (`options.json`)
 ``` json
 {
   "seats": 2,
@@ -51,8 +57,8 @@ node build/all.js
 ```
 * **seats**: number of seats available. The counting ends when all seats are
 filled.
-- **candidates**: list of candidates. The names in the list should match the
-headers in the `.csv` file.
+- **candidates**: list of candidates. Default: generated from votes; candidates
+who are not ranked by any one at all will not be reported.
 - **quota**: quota used to declare someone elected. When set below 0, the Droop
 quota is used; otherwise the quota is fixed at the given non-negative value.
 Default: `-1` (use Droop quota)
@@ -63,8 +69,8 @@ Default: `true`
 is never eliminated. If RON is not a supported option, it should be set to
 an empty string. Default: `''`
 
-### `votes.csv`
-This `.csv` file is used to import votes collected through table-format ranking,
+### CSV ballot file (`votes.csv`)
+CSV ballot file is suitable for  votes collected through table-format ranking,
 e.g. Google Forms.
 
 The first row lists all candidates ranked, followed by ballots. A ballot is
@@ -82,8 +88,24 @@ candidate1, candidate2, candidate3
 Here, three voters (1st, 3rd and 4th ballot) ranked `candidate1` as their first
 preference. `candidate2` is ranked the first on the second ballot.
 
+### JSON ballot file
+In a JSON ballot file, the votes are represented by an array of ordered arrays
+of the candidates.
+
+For example, the following JSON is equivalent to the CSV file above:
+``` json
+[
+  ["candidate1", "candidate2", "candidate3"],
+  ["candidate3", "candidate1", "candidate2"],
+  ["candidate1", "candidate3", "candidate2"],
+  ["candidate1", "candidate2", "candidate3"]  
+]
+```
+
+
 ### `result`
-The counting can be logged into `result` file (or any other file) by using redirect `>`/`>>` in `bash` or other shell.
+The counting can be logged into `result` file (or any other file) by using
+redirect `>` or `>>` in `bash` or other shell.
 
 
 Copyright & Licence
