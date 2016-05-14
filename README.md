@@ -82,6 +82,9 @@ candidate1, candidate2, candidate3
 Here, three voters (1st, 3rd and 4th ballot) ranked `candidate1` as their first
 preference. `candidate2` is ranked the first on the second ballot.
 
+### `result`
+The counting can be logged into `result` file (or any other file) by using redirect `>`/`>>` in `bash` or other shell.
+
 
 Copyright & Licence
 -------
