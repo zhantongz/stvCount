@@ -11,7 +11,7 @@ const logTrue = (...args) => console.log(...args);
 
 let precision = 6;
 
-function populate(votes) {
+function populate(...votes) {
   let populated = [];
   for (let vote of votes) {
     Array(vote[0]).fill(vote[1]).forEach(v => populated.push(v));
@@ -47,6 +47,18 @@ function pick(object, ...fields) {
 function removeBlanks(object) {
   return pick(object,
     ...Object.keys(object).filter(key => object[key] || object[key] === 0));
+}
+
+function withdraw(votes, ...candidates) {
+  var processed = votes.map(v => {
+    return v.slice();
+  });
+  for (let candidate of candidates) {
+    processed.forEach((val, ind, arr) => {
+      processed[ind] = val.filter(v => v !== candidate);
+    });
+  }
+  return processed;
 }
 
 function countPref(pref, cand, votes) {
@@ -258,9 +270,7 @@ surplus, counts, ron, surplusVotes = null) {
   surplus[candidate].surplus = surplusVotes !== null ?
     surplusVotes : roundCount[candidate];
 
-  votes.forEach((val, ind, arr) => {
-    votes[ind] = val.filter(v => v !== candidate);
-  });
+  votes = withdraw(votes, candidate);
 
   return candidate;
 }
@@ -356,7 +366,6 @@ export function count({votes, candidates, seats, quota, log, ron}) {
 }
 
 export function csvCount(csv, options) {
-  precision = options.precision || 6;
   let converter = new Converter({});
   converter.on('end_parsed', jsonArray => {
     let votes = [];
@@ -371,9 +380,8 @@ export function csvCount(csv, options) {
       voteArray = temp;
       votes[ind++] = voteArray;
     }
-    options.votes = votes;
-    options.candidates = options.candidates || getCandidates(json);
-    return count(options);
+
+    return jsonCount(votes, options);
   });
 
   if (typeof csv.pipe === 'function') {
@@ -387,7 +395,11 @@ export function csvCount(csv, options) {
 
 export function jsonCount(json, options) {
   precision = options.precision || 6;
-  options.votes = json;
+  if (options.withdrawn) {
+    options.votes = withdraw(json, ...options.withdrawn);
+  } else {
+    options.votes = json;
+  }
   options.candidates = options.candidates || getCandidates(json);
 
   return count(options);
@@ -395,4 +407,12 @@ export function jsonCount(json, options) {
 
 export function bltCount(blt, options) {
 
+
+  if (typeof blt.pipe === 'function') {
+    blt.resume().pipe(converter);
+  } else if (typeof blt === 'string') {
+    converter.fromString(blt);
+  } else {
+    console.error('Error: BLT stream or string needed');
+  }
 }

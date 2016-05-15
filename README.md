@@ -49,6 +49,7 @@ npm install
 {
   "seats": 2,
   "candidates": ["candidate1", "candidate2", "candidate3"],
+  "withdrawn": null,
   "quota": -1,
   "precision": 6,
   "log": true,
@@ -59,6 +60,9 @@ npm install
 filled.
 - **candidates**: list of candidates. Default: generated from votes; candidates
 who are not ranked by any one at all will not be reported.
+- **withdrawn**: list of withdrawn candidates. Withdrawn candidates are treated
+as if they have never standed on ballot, i.e. preference votes for them are
+transferred to next preferred candidate on each ballot. Default: `null`
 - **quota**: quota used to declare someone elected. When set below 0, the Droop
 quota is used; otherwise the quota is fixed at the given non-negative value.
 Default: `-1` (use Droop quota)

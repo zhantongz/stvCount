@@ -11,6 +11,7 @@ var options = argv.o || argv.options || 'options.json';
 options = require(path.join(process.cwd(), options.toString()));
 
 if (argv.blt) {
+  var blt = fs.createReadStream(path.join(process.cwd(), argv.blt)).pause();
   stvCount.bltCount(blt, options);
 } else if (argv.csv) {
   var csv = fs.createReadStream(path.join(process.cwd(), argv.csv)).pause();
