@@ -598,7 +598,7 @@ function roundCountTable(roundCount) {
 
 function countsTable(counts, elected) {
   var isElected = function isElected(candidate) {
-    return elected.includes(candidate) ? _chalk2.default.bold.green('✓') : _chalk2.default.bold.red('✗');
+    return elected.includes(candidate) ? _chalk2.default.bold.green('Y') : _chalk2.default.bold.red('X');
   };
   var table = new _cliTable2.default({
     head: [_chalk2.default.blue.bold('Round')].concat(_toConsumableArray(Array.from(new Array(counts.length), function (x, i) {
@@ -643,15 +643,16 @@ function count(_ref2) {
   ron = ron || '';
   title = title || '';
   prec = precision || 6;
-  if (withdrawn) {
-    votes = withdraw.apply(undefined, [votes].concat(_toConsumableArray(withdrawn)));
-  }
-
-  candidates = candidates || getCandidates(votes);
 
   logTrue(_chalk2.default.underline('stvCount', VERSION, '(c) Z. Tong Zhang'));
   logTrue(title);
   logTrue('********** COUNTING STARTS **********');
+  if (withdrawn) {
+    votes = withdraw.apply(undefined, [votes].concat(_toConsumableArray(withdrawn)));
+    log_(_chalk2.default.red.apply(_chalk2.default, ['-----'].concat(_toConsumableArray(withdrawn), ['withdrawn -----'])));
+  }
+
+  candidates = candidates || getCandidates(votes);
 
   if (quota < 0) quota = Math.floor(votes.length / (seats + 1) + 1);
   var values = new Array(votes.length).fill(1);

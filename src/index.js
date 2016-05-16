@@ -319,7 +319,7 @@ function roundCountTable(roundCount) {
 
 function countsTable(counts, elected) {
   const isElected = candidate => elected.includes(candidate) ?
-    chalk.bold.green('✓') : chalk.bold.red('✗');
+    chalk.bold.green('Y') : chalk.bold.red('X');
   let table = new Table({
     head: [chalk.blue.bold('Round'), ...Array.from(new Array(counts.length),
       (x, i) => chalk.blue.bold(i + 1)), chalk.bold.green('Elected'),],
@@ -350,15 +350,16 @@ title, precision, }) {
   ron = ron || '';
   title = title || '';
   prec = precision || 6;
-  if (withdrawn) {
-    votes = withdraw(votes, ...withdrawn);
-  }
-
-  candidates = candidates || getCandidates(votes);
 
   logTrue(chalk.underline('stvCount', VERSION, '(c) Z. Tong Zhang'));
   logTrue(title);
   logTrue('********** COUNTING STARTS **********')
+  if (withdrawn) {
+    votes = withdraw(votes, ...withdrawn);
+    log_(chalk.red('-----', ...withdrawn, 'withdrawn -----'));
+  }
+
+  candidates = candidates || getCandidates(votes);
 
   if (quota < 0) quota = Math.floor(votes.length / (seats + 1) + 1);
   let values = new Array(votes.length).fill(1);
