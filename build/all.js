@@ -551,8 +551,10 @@ function breakTie(potentials, counts) {
   log_('*a tie!*');
   if (counts.length > 0) {
     var _ret6 = function () {
-      var lastCount = counts[counts.length - 1];
+      var lastCount = counts[counts.length - 2];
+      console.log(lastCount);
       var lastCounts = pick.apply(undefined, [lastCount].concat(_toConsumableArray(potentials)));
+      console.log(lastCounts);
       var minVotes = getMin(getValues(lastCounts));
       var potentialsTie = [];
       potentials.forEach(function (val, ind) {
@@ -560,6 +562,7 @@ function breakTie(potentials, counts) {
           potentialsTie.push(ind);
         }
       });
+      log_(potentials, potentialsTie);
       if (potentialsTie.length <= 0) console.error('********** unable to continue elimination **********');
       if (potentialsTie.length === potentials.length) {
         var against = potentials[Math.floor(Math.random() * potentials.length)];

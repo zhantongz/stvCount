@@ -278,8 +278,10 @@ surplus, counts, ron, surplusVotes = null) {
 function breakTie(potentials, counts) {
   log_('*a tie!*');
   if (counts.length > 0) {
-    let lastCount = counts[counts.length - 1];
+    let lastCount = counts[counts.length - 2];
+    console.log(lastCount)
     let lastCounts = pick(lastCount, ...potentials);
+    console.log(lastCounts)
     let minVotes = getMin(getValues(lastCounts));
     let potentialsTie = [];
     potentials.forEach(function(val, ind) {
@@ -287,6 +289,7 @@ function breakTie(potentials, counts) {
         potentialsTie.push(ind);
       }
     });
+    log_(potentials, potentialsTie);
     if (potentialsTie.length <= 0)
       console.error('********** unable to continue elimination **********');
     if (potentialsTie.length === potentials.length) {
