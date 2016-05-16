@@ -552,17 +552,14 @@ function breakTie(potentials, counts) {
   if (counts.length > 0) {
     var _ret6 = function () {
       var lastCount = counts[counts.length - 2];
-      console.log(lastCount);
       var lastCounts = pick.apply(undefined, [lastCount].concat(_toConsumableArray(potentials)));
-      console.log(lastCounts);
       var minVotes = getMin(getValues(lastCounts));
       var potentialsTie = [];
       potentials.forEach(function (val, ind) {
         if (lastCounts[val] === minVotes) {
           potentialsTie.push(ind);
         }
-      });
-      log_(potentials, potentialsTie);
+      });;
       if (potentialsTie.length <= 0) console.error('********** unable to continue elimination **********');
       if (potentialsTie.length === potentials.length) {
         var against = potentials[Math.floor(Math.random() * potentials.length)];
@@ -573,7 +570,7 @@ function breakTie(potentials, counts) {
       }
       if (potentialsTie.length === 1) {
         var _against = potentials[potentialsTie[0]];
-        log_('----- tie broken against', _against, '-----');
+        log_('----- tie broken backwards against', _against, ' -----');
         return {
           v: _against
         };
