@@ -3,13 +3,14 @@ const VERSION = 'v16.05.1'
 import 'babel-polyfill';
 import chalk from 'chalk';
 import Table from 'cli-table';
-const Converter = require('csvtojson').Converter;
+import stream from 'stream';
+import csv from 'csv';
 
 let logging = true;
 const log_ = (...args) => logging ? console.log(...args) : {};
 const logTrue = (...args) => console.log(...args);
 
-let precision = 6;
+let prec = 6;
 
 function populate(...votes) {
   let populated = [];
@@ -49,16 +50,15 @@ function removeBlanks(object) {
     ...Object.keys(object).filter(key => object[key] || object[key] === 0));
 }
 
-function withdraw(votes, ...candidates) {
-  var processed = votes.map(v => {
-    return v.slice();
-  });
+function withdraw(ballots, ...candidates) {
+  let votes = ballots.map(v => v.slice());
   for (let candidate of candidates) {
-    processed.forEach((val, ind, arr) => {
-      processed[ind] = val.filter(v => v !== candidate);
+    votes.forEach((val, ind, arr) => {
+      votes[ind] = val.filter(v => v !== candidate);
     });
   }
-  return processed;
+
+  return votes;
 }
 
 function countPref(pref, cand, votes) {
@@ -207,7 +207,7 @@ function distributeSurplus(votes, values, lastCounts, surplus) {
             tableCount[transfer] += values[nextPref];
             totalTransferred += values[nextPref];
           }
-          count[transfer] = count[transfer].round(precision);
+          count[transfer] = count[transfer].round(prec);
         }
       }
 
@@ -270,7 +270,7 @@ surplus, counts, ron, surplusVotes = null) {
   surplus[candidate].surplus = surplusVotes !== null ?
     surplusVotes : roundCount[candidate];
 
-  votes = withdraw(votes, candidate);
+  votes.splice(0, votes.length, ...withdraw(votes, candidate));
 
   return candidate;
 }
@@ -341,19 +341,31 @@ function getCandidates(votes) {
   return [...new Set([].concat(...votes))];
 }
 
-export function count({votes, candidates, seats, quota, log, ron}) {
+export function count({votes, candidates, withdrawn, seats, quota, log, ron,
+title, precision, }) {
   if (log === false) {
     logging = false;
   }
 
   ron = ron || '';
+  title = title || '';
+  prec = precision || 6;
+  if (withdrawn) {
+    votes = withdraw(votes, ...withdrawn);
+  }
+
+  candidates = candidates || getCandidates(votes);
+
   logTrue(chalk.underline('stvCount', VERSION, '(c) Z. Tong Zhang'));
+  logTrue(title);
   logTrue('********** COUNTING STARTS **********')
 
   if (quota < 0) quota = Math.floor(votes.length / (seats + 1) + 1);
   let values = new Array(votes.length).fill(1);
   let result = round(votes, values, seats, quota, candidates, [], [], [], {},
     ron);
+
+  logTrue(chalk.bold(title));
   log_('votes #:', votes.length);
   log_('quota:', quota);
   countsTable(result.counts, result.elected);
@@ -365,12 +377,12 @@ export function count({votes, candidates, seats, quota, log, ron}) {
   return result;
 }
 
-export function csvCount(csv, options) {
-  let converter = new Converter({});
-  converter.on('end_parsed', jsonArray => {
+export function csvCount(csvData, options) {
+  let parser = csv.parse({columns: true}, (err, result) => {
+    if (err) console.error(err.message);
     let votes = [];
     let ind = 0;
-    for (let vote of jsonArray) {
+    for (let vote of result) {
       vote = removeBlanks(vote);
       let voteArray = Object.keys(vote).sort((a, b) => vote[a] - vote[b]);
       let temp = [];
@@ -380,39 +392,62 @@ export function csvCount(csv, options) {
       voteArray = temp;
       votes[ind++] = voteArray;
     }
-
-    return jsonCount(votes, options);
+    options.votes = votes;
+    count(options);
   });
 
-  if (typeof csv.pipe === 'function') {
-    csv.resume().pipe(converter);
+  if (typeof csvData.resume === 'function') {
+    csvData.resume().pipe(parser);
   } else if (typeof csv === 'string') {
-    converter.fromString(csv);
+    converter.fromString(csvData);
   } else {
-    console.error('Error: CSV stream or string needed');
+    return console.error('Error: CSV stream or string needed');
   }
-}
-
-export function jsonCount(json, options) {
-  precision = options.precision || 6;
-  if (options.withdrawn) {
-    options.votes = withdraw(json, ...options.withdrawn);
-  } else {
-    options.votes = json;
-  }
-  options.candidates = options.candidates || getCandidates(json);
-
-  return count(options);
 }
 
 export function bltCount(blt, options) {
+  let bltToOpt = (bltArray, opt) => {
+    opt.seats = bltArray[0][1];
+    opt.title = bltArray[-1][0] || '';
+    opt.candidates = [];
+    for (let i = -1 - bltArray[0][0]; i < -1; i++) {
+      opt.candidates.push(bltArray[i][0]);
+    }
 
+    let start = 1;
+    let votes = [];
+    if (bltArray[1][0] < 0) {
+      opt.withdrawn = bltArray[1];
+      start = 2;
+    }
+    for (let vote of bltArray.slice(start, -1 - bltArray[0][0])) {
+      if (vote.length > 1) {
+        let ranking = [];
+        vote.slice(1, -1).forEach(
+          candidate => ranking.push(opt.candidates[candidate - 1])
+        );
+        votes.push([vote[0], ranking]);
+      }
+    }
 
-  if (typeof blt.pipe === 'function') {
-    blt.resume().pipe(converter);
+    opt.votes = populate(...votes);
+    return count(opt);
+  }
+
+  let csvOpt = {
+    delimiter: ' ',
+    trim: true,
+  };
+  let parser = csv.parse(csvOpt, (err, result) => {
+    if (err) console.error(err.message);
+    bltToOpt(result, options);
+  });
+
+  if (typeof blt.resume === 'function') {
+    blt.resume().pipe(parser);
   } else if (typeof blt === 'string') {
-    converter.fromString(blt);
+    parser.write(blt);
   } else {
-    console.error('Error: BLT stream or string needed');
+    return console.error('Error: BLT stream or string needed');
   }
 }

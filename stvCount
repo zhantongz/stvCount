@@ -4,7 +4,6 @@ var stvCount = require('./build/all');
 var path = require('path');
 var fs = require('fs');
 var argv = require('minimist')(process.argv.slice(2));
-console.dir(argv);
 
 var options = argv.o || argv.options || 'options.json';
 
@@ -17,8 +16,8 @@ if (argv.blt) {
   var csv = fs.createReadStream(path.join(process.cwd(), argv.csv)).pause();
   stvCount.csvCount(csv, options);
 } else if (argv.json) {
-  var json = require(path.join(process.cwd(), argv.json));
-  stvCount.jsonCount(json, options);
+  options.votes = require(path.join(process.cwd(), argv.json));
+  stvCount.count(options);
 } else {
   console.error('Error: no file type indicated')
 }

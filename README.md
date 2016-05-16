@@ -47,6 +47,7 @@ npm install
 ### Options file (`options.json`)
 ``` json
 {
+  "title": "test election",
   "seats": 2,
   "candidates": ["candidate1", "candidate2", "candidate3"],
   "withdrawn": null,
@@ -56,8 +57,9 @@ npm install
   "ron": ""
 }
 ```
-* **seats**: number of seats available. The counting ends when all seats are
-filled.
+- **title**: title of the election. Default: `''`
+- **seats**: number of seats available. The counting ends when all seats are
+filled. *Mandatory*
 - **candidates**: list of candidates. Default: generated from votes; candidates
 who are not ranked by any one at all will not be reported.
 - **withdrawn**: list of withdrawn candidates. Withdrawn candidates are treated

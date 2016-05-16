@@ -1,16 +1,16 @@
 stvCount v16.05.1 (c) Z. Tong Zhang
-
+Central Quebec By-election
 ********** COUNTING STARTS **********
 ########## ROUND 1 ##########
 +++++ round count +++++
 ┌──────────────────────────────────────┬────┐
-│ Karomne Liberal / Libéral            │ 31 │
-├──────────────────────────────────────┼────┤
-│ Brotester Green / Vert               │ 5  │
+│ Unionist Bloc Québécois              │ 12 │
 ├──────────────────────────────────────┼────┤
 │ brendand19 NDP / NPD                 │ 30 │
 ├──────────────────────────────────────┼────┤
-│ Unionist Bloc Québécois              │ 12 │
+│ Karomne Liberal / Libéral            │ 31 │
+├──────────────────────────────────────┼────┤
+│ Brotester Green / Vert               │ 5  │
 ├──────────────────────────────────────┼────┤
 │ madrockets Independent / Indépendant │ 7  │
 ├──────────────────────────────────────┼────┤
@@ -18,20 +18,21 @@ stvCount v16.05.1 (c) Z. Tong Zhang
 └──────────────────────────────────────┴────┘
 ----- eliminated Brotester Green / Vert -----
 ########## ROUND 2 ##########
+{"Brotester Green / Vert":{"dist":{"Unionist Bloc Québécois":[],"brendand19 NDP / NPD":[69],"Karomne Liberal / Libéral":[64,65],"madrockets Independent / Indépendant":[72],"Spindleton Independent / Indépendant":[43]},"surplus":5}}
 ----- distributing surplus -----
 Brotester Green / Vert
-- transfers 2 vote(s) to Karomne Liberal / Libéral
 - transfers 1 vote(s) to brendand19 NDP / NPD
+- transfers 2 vote(s) to Karomne Liberal / Libéral
 - transfers 1 vote(s) to madrockets Independent / Indépendant
 - transfers 1 vote(s) to Spindleton Independent / Indépendant
 - Transfer in total: 5 Exhausted: 0
 +++++ round count +++++
 ┌──────────────────────────────────────┬────┐
-│ Karomne Liberal / Libéral            │ 33 │
+│ Unionist Bloc Québécois              │ 12 │
 ├──────────────────────────────────────┼────┤
 │ brendand19 NDP / NPD                 │ 31 │
 ├──────────────────────────────────────┼────┤
-│ Unionist Bloc Québécois              │ 12 │
+│ Karomne Liberal / Libéral            │ 33 │
 ├──────────────────────────────────────┼────┤
 │ madrockets Independent / Indépendant │ 8  │
 ├──────────────────────────────────────┼────┤
@@ -39,66 +40,70 @@ Brotester Green / Vert
 └──────────────────────────────────────┴────┘
 ----- eliminated madrockets Independent / Indépendant -----
 ########## ROUND 3 ##########
+{"madrockets Independent / Indépendant":{"dist":{"Unionist Bloc Québécois":[],"brendand19 NDP / NPD":[45,71,72],"Karomne Liberal / Libéral":[20,38,67,70],"Spindleton Independent / Indépendant":[]},"surplus":8}}
 ----- distributing surplus -----
 madrockets Independent / Indépendant
-- transfers 4 vote(s) to Karomne Liberal / Libéral
 - transfers 3 vote(s) to brendand19 NDP / NPD
+- transfers 4 vote(s) to Karomne Liberal / Libéral
 - Transfer in total: 7 Exhausted: 1
 +++++ round count +++++
 ┌──────────────────────────────────────┬────┐
-│ Karomne Liberal / Libéral            │ 37 │
+│ Unionist Bloc Québécois              │ 12 │
 ├──────────────────────────────────────┼────┤
 │ brendand19 NDP / NPD                 │ 34 │
 ├──────────────────────────────────────┼────┤
-│ Unionist Bloc Québécois              │ 12 │
+│ Karomne Liberal / Libéral            │ 37 │
 ├──────────────────────────────────────┼────┤
 │ Spindleton Independent / Indépendant │ 9  │
 └──────────────────────────────────────┴────┘
 ----- eliminated Spindleton Independent / Indépendant -----
 ########## ROUND 4 ##########
+{"Spindleton Independent / Indépendant":{"dist":{"Unionist Bloc Québécois":[13,14,16,17,43],"brendand19 NDP / NPD":[44,55],"Karomne Liberal / Libéral":[51,68]},"surplus":9}}
 ----- distributing surplus -----
 Spindleton Independent / Indépendant
-- transfers 2 vote(s) to Karomne Liberal / Libéral
-- transfers 2 vote(s) to brendand19 NDP / NPD
 - transfers 5 vote(s) to Unionist Bloc Québécois
+- transfers 2 vote(s) to brendand19 NDP / NPD
+- transfers 2 vote(s) to Karomne Liberal / Libéral
 - Transfer in total: 9 Exhausted: 0
 +++++ round count +++++
 ┌───────────────────────────┬────┐
-│ Karomne Liberal / Libéral │ 39 │
+│ Unionist Bloc Québécois   │ 17 │
 ├───────────────────────────┼────┤
 │ brendand19 NDP / NPD      │ 36 │
 ├───────────────────────────┼────┤
-│ Unionist Bloc Québécois   │ 17 │
+│ Karomne Liberal / Libéral │ 39 │
 └───────────────────────────┴────┘
 ----- eliminated Unionist Bloc Québécois -----
 ########## ROUND 5 ##########
+{"Unionist Bloc Québécois":{"dist":{"brendand19 NDP / NPD":[0,2,4,5,6,7,8,17,43],"Karomne Liberal / Libéral":[1,3,13,14,16]},"surplus":17}}
 ----- distributing surplus -----
 Unionist Bloc Québécois
-- transfers 5 vote(s) to Karomne Liberal / Libéral
 - transfers 9 vote(s) to brendand19 NDP / NPD
+- transfers 5 vote(s) to Karomne Liberal / Libéral
 - Transfer in total: 14 Exhausted: 3
 +++++ round count +++++
 ┌───────────────────────────┬────┐
-│ Karomne Liberal / Libéral │ 44 │
-├───────────────────────────┼────┤
 │ brendand19 NDP / NPD      │ 45 │
+├───────────────────────────┼────┤
+│ Karomne Liberal / Libéral │ 44 │
 └───────────────────────────┴────┘
 ----- eliminated Karomne Liberal / Libéral -----
 <remaining candidates can fill all vacancies>
 ----- elected brendand19 NDP / NPD -----
 ********** COUNTING ENDS **********
+Central Quebec By-election
 votes #: 93
 quota: 47
 ┌──────────────────────────────────────┬────┬────┬────┬────┬────┬─────────┐
 │ Round                                │ 1  │ 2  │ 3  │ 4  │ 5  │ Elected │
 ├──────────────────────────────────────┼────┼────┼────┼────┼────┼─────────┤
-│ Karomne Liberal / Libéral            │ 31 │ 33 │ 37 │ 39 │ 44 │ ✗       │
-├──────────────────────────────────────┼────┼────┼────┼────┼────┼─────────┤
-│ Brotester Green / Vert               │ 5  │ ✗  │ ✗  │ ✗  │ ✗  │ ✗       │
+│ Unionist Bloc Québécois              │ 12 │ 12 │ 12 │ 17 │ ✗  │ ✗       │
 ├──────────────────────────────────────┼────┼────┼────┼────┼────┼─────────┤
 │ brendand19 NDP / NPD                 │ 30 │ 31 │ 34 │ 36 │ 45 │ ✓       │
 ├──────────────────────────────────────┼────┼────┼────┼────┼────┼─────────┤
-│ Unionist Bloc Québécois              │ 12 │ 12 │ 12 │ 17 │ ✗  │ ✗       │
+│ Karomne Liberal / Libéral            │ 31 │ 33 │ 37 │ 39 │ 44 │ ✗       │
+├──────────────────────────────────────┼────┼────┼────┼────┼────┼─────────┤
+│ Brotester Green / Vert               │ 5  │ ✗  │ ✗  │ ✗  │ ✗  │ ✗       │
 ├──────────────────────────────────────┼────┼────┼────┼────┼────┼─────────┤
 │ madrockets Independent / Indépendant │ 7  │ 8  │ ✗  │ ✗  │ ✗  │ ✗       │
 ├──────────────────────────────────────┼────┼────┼────┼────┼────┼─────────┤
