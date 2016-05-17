@@ -108,6 +108,9 @@ For example, the following JSON is equivalent to the CSV file above:
 ]
 ```
 
+### BLT file
+`.BLT`-formatted files (accepted by programs such as OpenSTV) can also be
+counted using `bltCount([String|Stream] blt, [Object] options)` function.
 
 ### `result`
 The counting can be logged into `result` file (or any other file) by using
