@@ -35,12 +35,13 @@ Usage
 
 ```
 npm install
-./stvCount [[--options|-o] <options_file>] [--csv|--json] <file_name>
+./stvCount [[--options|-o] <options_file>] [--csv|--json|--blt] <file_name>
 ```
 
 ### Command line flags
 * **--csv** <*file_name*>: count votes from reading a CSV ballot file
 * **--json** <*file_name*>: count votes from reading a JSON ballot file
+* **--blt** <*file_name*>: count votes from reading a BLT ballot file
 * **--option** <*options_file*>: specify an options file. Default:
 `options.json` (under working directory)
 
@@ -110,7 +111,8 @@ For example, the following JSON is equivalent to the CSV file above:
 
 ### BLT file
 `.BLT`-formatted files (accepted by programs such as OpenSTV) can also be
-counted using `bltCount([String|Stream] blt, [Object] options)` function.
+counted, using command line or using
+`bltCount([String|Stream] blt, [Object] options)` function.
 
 ### `result`
 The counting can be logged into `result` file (or any other file) by using
