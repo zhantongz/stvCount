@@ -549,7 +549,7 @@ function eliminate(votes, values, candidate, roundCount, hopefuls, excluded, sur
 
 function breakTie(potentials, counts) {
   log_('*a tie!*');
-  if (counts.length > 0) {
+  if (counts.length > 1) {
     var _ret6 = function () {
       var lastCount = counts[counts.length - 2];
       var lastCounts = pick.apply(undefined, [lastCount].concat(_toConsumableArray(potentials)));
@@ -559,15 +559,8 @@ function breakTie(potentials, counts) {
         if (lastCounts[val] === minVotes) {
           potentialsTie.push(ind);
         }
-      });;
+      });
       if (potentialsTie.length <= 0) console.error('********** unable to continue elimination **********');
-      if (potentialsTie.length === potentials.length) {
-        var against = potentials[Math.floor(Math.random() * potentials.length)];
-        log_('----- tie randomly broken against', against, '-----');
-        return {
-          v: against
-        };
-      }
       if (potentialsTie.length === 1) {
         var _against = potentials[potentialsTie[0]];
         log_('----- tie broken backwards against', _against, ' -----');
@@ -586,6 +579,10 @@ function breakTie(potentials, counts) {
 
     if ((typeof _ret6 === 'undefined' ? 'undefined' : _typeof(_ret6)) === "object") return _ret6.v;
   }
+
+  var against = potentials[Math.floor(Math.random() * potentials.length)];
+  log_('----- tie randomly broken against', against, '-----');
+  return against;
 }
 
 function roundCountTable(roundCount) {

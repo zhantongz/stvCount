@@ -277,7 +277,7 @@ surplus, counts, ron, surplusVotes = null) {
 
 function breakTie(potentials, counts) {
   log_('*a tie!*');
-  if (counts.length > 0) {
+  if (counts.length > 1) {
     let lastCount = counts[counts.length - 2];
     let lastCounts = pick(lastCount, ...potentials);
     let minVotes = getMin(getValues(lastCounts));
@@ -286,14 +286,9 @@ function breakTie(potentials, counts) {
       if (lastCounts[val] === minVotes) {
         potentialsTie.push(ind);
       }
-    });;
+    });
     if (potentialsTie.length <= 0)
       console.error('********** unable to continue elimination **********');
-    if (potentialsTie.length === potentials.length) {
-      let against = potentials[Math.floor(Math.random() * potentials.length)];
-      log_('----- tie randomly broken against', against, '-----');
-      return against;
-    }
     if (potentialsTie.length === 1) {
       let against = potentials[potentialsTie[0]];
       log_('----- tie broken backwards against', against, ' -----');
@@ -305,6 +300,10 @@ function breakTie(potentials, counts) {
     }
     return breakTie(potentialCands, counts.slice(0, -1));
   }
+
+  let against = potentials[Math.floor(Math.random() * potentials.length)];
+  log_('----- tie randomly broken against', against, '-----');
+  return against;
 }
 
 function roundCountTable(roundCount) {
