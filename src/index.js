@@ -5,12 +5,15 @@ import chalk from 'chalk';
 import Table from 'cli-table';
 import stream from 'stream';
 import csv from 'csv';
+import seedrandom from 'seedrandom';
 
 let logging = true;
 const log_ = (...args) => logging ? console.log(...args) : {};
 const logTrue = (...args) => console.log(...args);
 
 let prec = 6;
+
+let rng = Math.random();
 
 function populate(...votes) {
   let populated = [];
@@ -301,7 +304,7 @@ function breakTie(potentials, counts) {
     return breakTie(potentialCands, counts.slice(0, -1));
   }
 
-  let against = potentials[Math.floor(Math.random() * potentials.length)];
+  let against = potentials[Math.floor(rng() * potentials.length)];
   log_('----- tie randomly broken against', against, '-----');
   return against;
 }
@@ -341,7 +344,7 @@ function getCandidates(votes) {
 }
 
 export function count({votes, candidates, withdrawn, seats, quota, log, ron,
-title, precision, }) {
+title, precision, seed, }) {
   if (log === false) {
     logging = false;
   }
@@ -349,6 +352,10 @@ title, precision, }) {
   ron = ron || '';
   title = title || '';
   prec = precision || 6;
+
+  if (seed) {
+    rng = seedrandom(seed);
+  }
 
   logTrue(chalk.underline('stvCount', VERSION, '(c) Z. Tong Zhang'));
   logTrue(title);

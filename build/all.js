@@ -28,6 +28,10 @@ var _csv = require('csv');
 
 var _csv2 = _interopRequireDefault(_csv);
 
+var _seedrandom = require('seedrandom');
+
+var _seedrandom2 = _interopRequireDefault(_seedrandom);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -49,6 +53,8 @@ var logTrue = function logTrue() {
 };
 
 var prec = 6;
+
+var rng = Math.random();
 
 function populate() {
   var populated = [];
@@ -580,7 +586,7 @@ function breakTie(potentials, counts) {
     if ((typeof _ret6 === 'undefined' ? 'undefined' : _typeof(_ret6)) === "object") return _ret6.v;
   }
 
-  var against = potentials[Math.floor(Math.random() * potentials.length)];
+  var against = potentials[Math.floor(rng() * potentials.length)];
   log_('----- tie randomly broken against', against, '-----');
   return against;
 }
@@ -632,6 +638,7 @@ function count(_ref2) {
   var ron = _ref2.ron;
   var title = _ref2.title;
   var precision = _ref2.precision;
+  var seed = _ref2.seed;
 
   if (log === false) {
     logging = false;
@@ -640,6 +647,10 @@ function count(_ref2) {
   ron = ron || '';
   title = title || '';
   prec = precision || 6;
+
+  if (seed) {
+    rng = (0, _seedrandom2.default)(seed);
+  }
 
   logTrue(_chalk2.default.underline('stvCount', VERSION, '(c) Z. Tong Zhang'));
   logTrue(title);
