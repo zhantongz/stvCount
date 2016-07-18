@@ -54,7 +54,7 @@ var logTrue = function logTrue() {
 
 var prec = 6;
 
-var rng = Math.random();
+var rng = Math.random;
 
 function populate() {
   var populated = [];
@@ -586,7 +586,7 @@ function breakTie(potentials, counts) {
     if ((typeof _ret6 === 'undefined' ? 'undefined' : _typeof(_ret6)) === "object") return _ret6.v;
   }
 
-  var against = potentials[Math.floor(rng * potentials.length)];
+  var against = potentials[Math.floor(rng() * potentials.length)];
   log_('----- tie randomly broken against', against, '-----');
   return against;
 }

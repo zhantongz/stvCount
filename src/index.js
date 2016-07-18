@@ -13,7 +13,7 @@ const logTrue = (...args) => console.log(...args);
 
 let prec = 6;
 
-let rng = Math.random();
+let rng = Math.random;
 
 function populate(...votes) {
   let populated = [];
@@ -304,7 +304,7 @@ function breakTie(potentials, counts) {
     return breakTie(potentialCands, counts.slice(0, -1));
   }
 
-  let against = potentials[Math.floor(rng * potentials.length)];
+  let against = potentials[Math.floor(rng() * potentials.length)];
   log_('----- tie randomly broken against', against, '-----');
   return against;
 }
