@@ -54,7 +54,7 @@ var logTrue = function logTrue() {
 
 var prec = 6;
 
-var rng = Math.random();
+var rng = Math.random;
 
 function populate() {
   var populated = [];

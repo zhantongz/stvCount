@@ -13,7 +13,7 @@ const logTrue = (...args) => console.log(...args);
 
 let prec = 6;
 
-let rng = Math.random();
+let rng = Math.random;
 
 function populate(...votes) {
   let populated = [];
